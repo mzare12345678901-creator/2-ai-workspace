@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="theme-color" content="#0f1117" />
+<meta name="description" content="دستیار هوش مصنوعی پیشرفته با Agent Loop" />
+<title>🧠 AI Workspace</title>
+
+<!-- External Libraries -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css" />
+
+<!-- Custom Styles -->
+<link rel="stylesheet" href="/static/style.css" />
+
+<!-- JavaScript Libraries -->
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/common.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════
+     صفحه لاگین / ثبت‌نام
+     ═══════════════════════════════════════════════════════════ -->
+<div id="authScreen" class="auth-screen">
+  <div class="auth-box">
+    <div class="auth-logo">🧠</div>
+    <h2 id="authTitle">🔐 ورود به حساب</h2>
+    <p class="auth-subtitle" id="authSubtitle">به AI Workspace خوش آمدی</p>
+
+    <div id="authError" class="auth-error"></div>
+
+    <div class="auth-form">
+      <div class="auth-field">
+        <span class="auth-icon">👤</span>
+        <input type="text" id="authUsername" placeholder="نام کاربری" autocomplete="username" />
+      </div>
+
+      <div class="auth-field" id="authEmailField" style="display:none">
+        <span class="auth-icon">📧</span>
+        <input type="email" id="authEmail" placeholder="ایمیل" autocomplete="email" />
+      </div>
+
+      <div class="auth-field">
+        <span class="auth-icon">🔒</span>
+        <input type="password" id="authPassword" placeholder="رمز عبور" autocomplete="current-password" />
+        <button type="button" class="auth-toggle-pass" id="togglePass">👁️</button>
+      </div>
+    </div>
+
+    <button class="btn-primary" id="authSubmit">
+      <span id="authSubmitText">ورود به حساب</span>
+    </button>
+
+    <div class="auth-toggle">
+      <span id="authToggleText">حساب نداری؟</span>
+      <a href="#" id="authToggle">ثبت‌نام کن</a>
+    </div>
+
+    <div class="auth-footer">
+      <span>ساخته‌شده با ❤️ با FastAPI</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     اپلیکیشن اصلی
+     ═══════════════════════════════════════════════════════════ -->
+<div class="app" id="mainApp" style="display:none">
+
+  <!-- ═══════════ Sidebar ═══════════ -->
+  <aside class="sidebar" id="sidebar">
+
+    <!-- Header -->
+    <div class="sidebar-header">
+      <div class="sidebar-brand">
+        <span class="brand-icon">🧠</span>
+        <span class="brand-name">AI Workspace</span>
+      </div>
+      <button class="icon-btn-top" id="closeSidebarMobile" title="بستن" style="display:none">✕</button>
+    </div>
+
+    <!-- Actions -->
+    <div class="sidebar-top">
+      <button class="btn-new" id="newChat">
+        <span>➕</span>
+        <span>گفتگوی جدید</span>
+      </button>
+      <button class="icon-btn-top" id="openSettings" title="تنظیمات">⚙️</button>
+    </div>
+
+    <!-- Search Box -->
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchInput" placeholder="جستجو در گفتگوها..." />
+      <button class="search-clear" id="clearSearch" style="display:none" title="پاک کردن">✕</button>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="filter-tabs" id="filterTabs">
+      <button class="filter-tab active" data-filter="all">
+        <span>📋</span> همه
+      </button>
+      <button class="filter-tab" data-filter="pinned">
+        <span>📌</span> سنجاق
+      </button>
+      <button class="filter-tab" data-filter="favorite">
+        <span>⭐</span> علاقه
+      </button>
+      <button class="filter-tab" data-filter="archived">
+        <span>🗄️</span> آرشیو
+      </button>
+    </div>
+
+    <!-- Conversation List -->
+    <div class="conv-list" id="convList"></div>
+
+    <!-- Sidebar Bottom -->
+    <div class="sidebar-bottom">
+
+      <button id="requestAdminBtn" class="btn-ghost" style="display:none">
+        <span>👑</span> درخواست ادمین شدن
+      </button>
+
+      <button id="openAdminSettings" class="btn-ghost btn-admin-special" style="display:none">
+        <span>🔑</span> تنظیمات API (ادمین)
+      </button>
+
+      <a href="/admin" id="adminLink" class="btn-ghost" style="display:none">
+        <span>🛡️</span> پنل ادمین
+      </a>
+
+      <button id="exportAllBtn" class="btn-ghost">
+        <span>📦</span> بکاپ کل گفتگوها
+      </button>
+
+      <button id="logoutBtn" class="btn-ghost btn-danger-ghost">
+        <span>🚪</span> خروج از حساب
+      </button>
+
+      <!-- Agent Timeline -->
+      <div class="agent-state" id="agentPanel">
+        <div class="agent-title">
+          <span>🤖</span>
+          <span>Agent Timeline</span>
+          <button class="agent-clear" id="clearAgentTimeline" title="پاک کردن">✕</button>
+        </div>
+        <div class="agent-steps" id="agentSteps">
+          <div class="step">آماده برای شروع</div>
+        </div>
+      </div>
+
+      <!-- User Info -->
+      <div class="user-info" id="userInfo">
+        <div class="user-avatar" id="userAvatar">?</div>
+        <div class="user-meta">
+          <div class="user-name" id="userName">-</div>
+          <div class="user-role" id="userRole">کاربر</div>
+        </div>
+      </div>
+
+    </div>
+  </aside>
+
+  <!-- ═══════════ Main Area ═══════════ -->
+  <main class="main">
+
+    <!-- Top Bar -->
+    <header class="topbar">
+      <button class="menu-btn" id="menuBtn" title="منو">☰</button>
+
+      <div class="chat-title-wrap">
+        <div class="title" id="chatTitle">🧠 AI Workspace</div>
+        <div class="chat-subtitle" id="chatSubtitle">شروع کن...</div>
+      </div>
+
+      <div class="chat-actions" id="chatActions" style="display:none">
+        <button class="chip-btn" id="pinChat" title="سنجاق کردن">📌</button>
+        <button class="chip-btn" id="favChat" title="علاقه‌مندی">⭐</button>
+        <button class="chip-btn" id="archiveChat" title="آرشیو">🗄️</button>
+        <button class="chip-btn" id="renameChat" title="تغییر نام">✏️</button>
+        <button class="chip-btn" id="autoNameChat" title="تولید خودکار نام">🪄</button>
+        <button class="chip-btn" id="tagChat" title="تگ‌ها">🏷️</button>
+        <button class="chip-btn" id="duplicateChat" title="کپی">📋</button>
+        <button class="chip-btn" id="exportChat" title="خروجی">📥</button>
+        <button class="chip-btn danger" id="deleteChat" title="حذف">🗑️</button>
+      </div>
+
+      <div class="status" id="status">
+        <span class="status-dot"></span>
+        <span id="statusText">آماده</span>
+      </div>
+    </header>
+
+    <!-- Chat Area -->
+    <section class="chat" id="chat">
+      <!-- Welcome Screen -->
+      <div class="welcome-screen" id="welcomeScreen">
+        <div class="welcome-icon">🧠</div>
+        <h2 class="welcome-title">به AI Workspace خوش آمدی!</h2>
+        <p class="welcome-subtitle">دستیار هوشمند با قابلیت Agent Loop، حافظه‌ی بلندمدت و پشتیبانی از چند Provider</p>
+
+        <div class="welcome-features">
+          <div class="welcome-card" data-prompt="یک کد Python برای مرتب‌سازی سریع بنویس">
+            <div class="welcome-card-icon">💻</div>
+            <div class="welcome-card-title">کدنویسی</div>
+            <div class="welcome-card-desc">سوال برنامه‌نویسی بپرس</div>
+          </div>
+          <div class="welcome-card" data-prompt="درباره هوش مصنوعی توضیح بده">
+            <div class="welcome-card-icon">📚</div>
+            <div class="welcome-card-title">تحقیق</div>
+            <div class="welcome-card-desc">درباره هر موضوعی بپرس</div>
+          </div>
+          <div class="welcome-card" data-prompt="یک ایده برای پروژه جدید بده">
+            <div class="welcome-card-icon">💡</div>
+            <div class="welcome-card-title">ایده</div>
+            <div class="welcome-card-desc">ایده‌پردازی و خلاقیت</div>
+          </div>
+          <div class="welcome-card" data-prompt="یک متن اداری حرفه‌ای بنویس">
+            <div class="welcome-card-icon">✍️</div>
+            <div class="welcome-card-title">نویسندگی</div>
+            <div class="welcome-card-desc">متن حرفه‌ای بنویس</div>
+          </div>
+        </div>
+
+        <div class="welcome-hint">
+          💡 می‌تونی با <kbd>Ctrl</kbd> + <kbd>K</kbd> پالت فرمان‌ها رو باز کنی
+        </div>
+      </div>
+    </section>
+
+    <!-- Composer -->
+    <footer class="composer">
+
+      <!-- Attached Files -->
+      <div class="attached" id="attached"></div>
+
+      <!-- Model Bar -->
+      <div class="composer-info" id="composerInfo" style="display:none">
+        <span class="composer-info-item" id="modelInfo">🤖 gpt-4o-mini</span>
+        <span class="composer-info-item" id="tokensInfo">📊 ~0 توکن</span>
+      </div>
+
+      <!-- Input Row -->
+      <div class="composer-row">
+        <button class="icon-btn" id="fileBtn" title="پیوست فایل">📎</button>
+        <input type="file" id="fileInput" hidden multiple />
+
+        <div class="textarea-wrap">
+          <textarea
+            id="input"
+            placeholder="پیامت را بنویس... (Enter=ارسال، Shift+Enter=خط جدید)"
+            rows="1"
+          ></textarea>
+          <div class="textarea-actions">
+            <button class="textarea-action" id="clearInput" title="پاک کردن" style="display:none">✕</button>
+          </div>
+        </div>
+
+        <button class="icon-btn mic" id="micBtn" title="میکروفون">🎙️</button>
+        <button class="stop-btn" id="stopBtn" style="display:none" title="توقف">⏹️</button>
+        <button class="send-btn" id="sendBtn" title="ارسال">
+          <span>ارسال</span>
+          <span class="send-icon">➤</span>
+        </button>
+      </div>
+
+      <!-- Hints -->
+      <div class="composer-hints">
+        <span class="hint-item">💡 Enter=ارسال</span>
+        <span class="hint-item">📎 Shift+Enter=خط جدید</span>
+        <span class="hint-item">🎙️ میکروفون فارسی</span>
+        <span class="hint-item" id="charCount">۰ کاراکتر</span>
+      </div>
+    </footer>
+
+  </main>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     مودال: تنظیمات کاربر
+     ═══════════════════════════════════════════════════════════ -->
+<div class="modal" id="settingsModal">
+  <div class="modal-box" style="max-width:620px">
+    <div class="modal-header">
+      <h3>⚙️ تنظیمات</h3>
+      <button class="modal-close" id="closeSettings">✕</button>
+    </div>
+
+    <div class="tabs" id="settingsTabs">
+      <button class="tab active" data-tab="appearance"><span>🎨</span> ظاهر</button>
+      <button class="tab" data-tab="ai"><span>🤖</span> هوش مصنوعی</button>
+      <button class="tab" data-tab="voice"><span>🎙️</span> صدا</button>
+      <button class="tab" data-tab="memory"><span>🧠</span> حافظه</button>
+      <button class="tab" data-tab="advanced"><span>⚡</span> پیشرفته</button>
+      <button class="tab" data-tab="about"><span>ℹ️</span> درباره</button>
+    </div>
+
+    <!-- ظاهر -->
+    <div class="tab-content active" data-tab="appearance">
+      <div class="field">
+        <label>اندازه فونت: <span id="fontSizeVal">14</span>px</label>
+        <input type="range" id="setFontSize" min="12" max="20" step="1" />
+      </div>
+      <div class="field checkbox-field">
+        <input type="checkbox" id="setCompact" />
+        <label for="setCompact">حالت فشرده</label>
+      </div>
+      <div class="field">
+        <label>انتخاب تم:</label>
+        <div class="theme-grid" id="themeGrid"></div>
+      </div>
+    </div>
+
+    <!-- AI -->
+    <div class="tab-content" data-tab="ai">
+      <div class="field">
+        <label>Provider</label>
+        <select id="setProvider">
+          <option value="openai">OpenAI</option>
+          <option value="openrouter">OpenRouter</option>
+          <option value="groq">Groq</option>
+          <option value="ollama">Ollama (local)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>مدل</label>
+        <input type="text" id="setModel" placeholder="gpt-4o-mini" />
+      </div>
+      <div class="field">
+        <label>Temperature: <span id="tempVal">0.7</span></label>
+        <input type="range" id="setTemp" min="0" max="2" step="0.1" />
+      </div>
+      <div class="field">
+        <label>Max Tokens</label>
+        <input type="number" id="setMaxTokens" min="256" max="32000" step="128" />
+      </div>
+      <div class="field">
+        <label>System Prompt سفارشی</label>
+        <textarea id="setSysPrompt" rows="4" placeholder="دستورات پایه برای هوش مصنوعی..."></textarea>
+      </div>
+    </div>
+
+    <!-- صدا -->
+    <div class="tab-content" data-tab="voice">
+      <div class="field checkbox-field">
+        <input type="checkbox" id="setVoiceEnabled" />
+        <label for="setVoiceEnabled">پاسخ صوتی فعال باشد</label>
+      </div>
+      <div class="field">
+        <label>زبان</label>
+        <input type="text" id="setVoiceLang" placeholder="fa-IR" />
+      </div>
+      <div class="field">
+        <label>سرعت: <span id="voiceRateVal">1.0</span></label>
+        <input type="range" id="setVoiceRate" min="0.5" max="2" step="0.1" />
+      </div>
+      <div class="field">
+        <label>زیر و بمی صدا: <span id="voicePitchVal">1.0</span></label>
+        <input type="range" id="setVoicePitch" min="0.5" max="2" step="0.1" />
+      </div>
+      <div class="field">
+        <label>صدای موردنظر</label>
+        <select id="setVoiceName">
+          <option value="">پیش‌فرض</option>
+        </select>
+      </div>
+      <button class="btn-ghost" id="testVoice" style="margin-top:8px">🔊 تست صدا</button>
+    </div>
+
+    <!-- حافظه -->
+    <div class="tab-content" data-tab="memory">
+      <div class="field">
+        <label>تعداد پیام‌های context: <span id="ctxVal">20</span></label>
+        <input type="range" id="setContext" min="4" max="50" step="1" />
+      </div>
+      <div class="field checkbox-field">
+        <input type="checkbox" id="setAutoSum" />
+        <label for="setAutoSum">خلاصه‌سازی خودکار مکالمات طولانی</label>
+      </div>
+      <div class="divider"></div>
+      <button class="btn-ghost" id="openMemoryManager">🧠 مدیریت حافظه بلندمدت</button>
+    </div>
+
+    <!-- پیشرفته -->
+    <div class="tab-content" data-tab="advanced">
+      <div class="field checkbox-field">
+        <input type="checkbox" id="setStreaming" />
+        <label for="setStreaming">نمایش پاسخ به صورت کلمه‌به‌کلمه (Streaming)</label>
+      </div>
+      <div class="field checkbox-field">
+        <input type="checkbox" id="setNotifications" />
+        <label for="setNotifications">نوتیفیکیشن مرورگر</label>
+      </div>
+      <div class="field checkbox-field">
+        <input type="checkbox" id="setTimeline" />
+        <label for="setTimeline">نمایش Agent Timeline</label>
+      </div>
+      <div class="divider"></div>
+      <button class="btn-ghost" id="clearAllChats" style="border-color:#ef4444;color:#ef4444">🗑️ حذف همه‌ی گفتگوها</button>
+    </div>
+
+    <!-- درباره -->
+    <div class="tab-content" data-tab="about">
+      <div class="about-section">
+        <h4>🧠 AI Workspace</h4>
+        <p>دستیار هوشمند با FastAPI</p>
+      </div>
+      <div class="about-section">
+        <h5>نسخه</h5>
+        <p>v1.0.0 — Phase 1</p>
+      </div>
+      <div class="about-section">
+        <h5>قابلیت‌های فعال</h5>
+        <ul class="about-list">
+          <li>✅ چت با AI + Streaming</li>
+          <li>✅ ۱۰ تم قابل انتخاب</li>
+          <li>✅ میکروفون + پاسخ صوتی</li>
+          <li>✅ آپلود فایل</li>
+          <li>✅ سنجاق، آرشیو، علاقه‌مندی</li>
+          <li>✅ تگ‌گذاری گفتگوها</li>
+          <li>✅ نام‌گذاری خودکار</li>
+          <li>✅ خروجی MD/JSON/TXT</li>
+          <li>✅ ویرایش + Regenerate پیام</li>
+          <li>✅ بوکمارک پیام‌ها</li>
+          <li>✅ حافظه بلندمدت</li>
+          <li>✅ LaTeX + Mermaid</li>
+        </ul>
+      </div>
+      <div class="about-section">
+        <h5>میان‌برهای کیبورد</h5>
+        <ul class="about-list">
+          <li><kbd>Ctrl</kbd> + <kbd>K</kbd> — پالت فرمان</li>
+          <li><kbd>Ctrl</kbd> + <kbd>N</kbd> — گفتگوی جدید</li>
+          <li><kbd>Ctrl</kbd> + <kbd>/</kbd> — فوکوس روی input</li>
+          <li><kbd>Ctrl</kbd> + <kbd>B</kbd> — تاگل سایدبار</li>
+          <li><kbd>Esc</kbd> — بستن مودال</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-ghost" id="closeSettingsBtn">بستن</button>
+      <button class="send-btn" id="saveSettings">💾 ذخیره</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     مودال: تنظیمات ادمین
+     ═══════════════════════════════════════════════════════════ -->
+<div class="modal" id="adminSettingsModal">
+  <div class="modal-box admin-modal">
+    <div class="modal-header">
+      <h3>🔑 تنظیمات ادمین</h3>
+      <button class="modal-close" id="closeAdminSettings">✕</button>
+    </div>
+
+    <div class="tabs" id="adminTabs">
+      <button class="tab active" data-atab="ai"><span>🤖</span> AI</button>
+      <button class="tab" data-atab="fallback"><span>🔄</span> Fallback</button>
+      <button class="tab" data-atab="system"><span>⚙️</span> سیستم</button>
+      <button class="tab" data-atab="limits"><span>📊</span> محدودیت‌ها</button>
+      <button class="tab" data-atab="defaults"><span>👥</span> پیش‌فرض کاربر</button>
+    </div>
+
+    <!-- AI -->
+    <div class="tab-content active" data-atab="ai">
+      <div class="field">
+        <label>API Key</label>
+        <input type="password" id="admAiKey" placeholder="sk-..." />
+      </div>
+      <div class="field">
+        <label>Base URL</label>
+        <input type="text" id="admAiUrl" placeholder="https://api.openai.com/v1" />
+      </div>
+      <div class="field">
+        <label>مدل</label>
+        <input type="text" id="admAiModel" placeholder="gpt-4o-mini" />
+      </div>
+      <div class="field">
+        <label>Temperature: <span id="admTempVal">0.7</span></label>
+        <input type="range" id="admAiTemp" min="0" max="2" step="0.1" />
+      </div>
+      <div class="field">
+        <label>Max Tokens</label>
+        <input type="number" id="admAiMaxTokens" min="256" max="32000" />
+      </div>
+      <div class="field">
+        <label>System Prompt سراسری</label>
+        <textarea id="admSysPrompt" rows="3" placeholder="خالی = پیش‌فرض"></textarea>
+      </div>
+      <button class="btn-ghost" id="testAdminApi">🧪 تست اتصال API</button>
+      <div id="testApiResult" class="test-result"></div>
+    </div>
+
+    <!-- Fallback -->
+    <div class="tab-content" data-atab="fallback">
+      <p class="hint">اگه Provider اصلی قطع شد، خودکار بره سراغ این یکی.</p>
+      <div class="field checkbox-field">
+        <input type="checkbox" id="admFallbackEnabled" />
+        <label for="admFallbackEnabled">فعال‌سازی Fallback</label>
+      </div>
+      <div class="field">
+        <label>API Key (Fallback)</label>
+        <input type="password" id="admFbKey" placeholder="sk-..." />
+      </div>
+      <div class="field">
+        <label>Base URL (Fallback)</label>
+        <input type="text" id="admFbUrl" placeholder="https://api.groq.com/openai/v1" />
+      </div>
+      <div class="field">
+        <label>مدل (Fallback)</label>
+        <input type="text" id="admFbModel" placeholder="llama-3.1-70b" />
+      </div>
+    </div>
+
+    <!-- سیستم -->
+    <div class="tab-content" data-atab="system">
+      <div class="field checkbox-field">
+        <input type="checkbox" id="admMaintenance" />
+        <label for="admMaintenance">حالت تعمیر (Maintenance Mode)</label>
+      </div>
+      <div class="field">
+        <label>پیام تعمیر</label>
+        <textarea id="admMaintenanceMsg" rows="2"></textarea>
+      </div>
+      <div class="field checkbox-field">
+        <input type="checkbox" id="admAllowReg" />
+        <label for="admAllowReg">اجازه ثبت‌نام کاربران جدید</label>
+      </div>
+      <div class="field">
+        <label>نام سایت</label>
+        <input type="text" id="admSiteName" />
+      </div>
+      <div class="field">
+        <label>توضیح سایت</label>
+        <input type="text" id="admSiteDesc" />
+      </div>
+      <div class="field">
+        <label>پیام خوش‌آمدگویی</label>
+        <textarea id="admWelcome" rows="2" placeholder="خالی = بدون پیام"></textarea>
+      </div>
+    </div>
+
+    <!-- محدودیت‌ها -->
+    <div class="tab-content" data-atab="limits">
+      <div class="field">
+        <label>حداکثر حجم فایل (MB)</label>
+        <input type="number" id="admMaxUpload" min="1" max="100" />
+      </div>
+      <div class="field">
+        <label>حداکثر پیام روزانه هر کاربر</label>
+        <input type="number" id="admDailyMsg" min="0" max="10000" />
+      </div>
+      <div class="field">
+        <label>حداکثر تعداد کاربران (0 = بی‌نهایت)</label>
+        <input type="number" id="admMaxUsers" min="0" />
+      </div>
+      <div class="field">
+        <label>محدودیت درخواست در دقیقه</label>
+        <input type="number" id="admRateLimit" min="1" max="200" />
+      </div>
+      <div class="field">
+        <label>حداقل طول رمز عبور</label>
+        <input type="number" id="admMinPass" min="4" max="32" />
+      </div>
+      <div class="field">
+        <label>مدت اعتبار توکن (روز)</label>
+        <input type="number" id="admSessionDays" min="1" max="90" />
+      </div>
+      <div class="field checkbox-field">
+        <input type="checkbox" id="admRequireEmail" />
+        <label for="admRequireEmail">نیاز به تأیید ایمیل</label>
+      </div>
+    </div>
+
+    <!-- پیش‌فرض -->
+    <div class="tab-content" data-atab="defaults">
+      <p class="hint">این‌ها برای کاربران جدید اعمال می‌شه.</p>
+      <div class="field">
+        <label>تم پیش‌فرض</label>
+        <select id="admDefTheme">
+          <option value="dark">🌙 شبانه</option>
+          <option value="light">☀️ روزانه</option>
+          <option value="ocean">🌊 اقیانوس</option>
+          <option value="sunset">🌅 غروب</option>
+          <option value="forest">🌲 جنگل</option>
+          <option value="purple">💜 بنفش</option>
+          <option value="rose">🌹 رز</option>
+          <option value="cyberpunk">🎮 سایبر</option>
+          <option value="coffee">☕ قهوه</option>
+          <option value="mono">⚫ تک‌رنگ</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>مدل پیش‌فرض</label>
+        <input type="text" id="admDefModel" />
+      </div>
+      <div class="field">
+        <label>Temperature پیش‌فرض: <span id="admDefTempVal">0.7</span></label>
+        <input type="range" id="admDefTemp" min="0" max="2" step="0.1" />
+      </div>
+      <div class="field checkbox-field">
+        <input type="checkbox" id="admDefStreaming" />
+        <label for="admDefStreaming">Streaming فعال</label>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-ghost" id="closeAdminSettingsBtn">بستن</button>
+      <button class="send-btn" id="saveAdminSettings">💾 ذخیره</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     مودال: درخواست ادمین
+     ═══════════════════════════════════════════════════════════ -->
+<div class="modal" id="requestModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>👑 درخواست ادمین شدن</h3>
+      <button class="modal-close" id="closeRequest">✕</button>
+    </div>
+    <p style="font-size:13px;color:var(--fg2);margin-bottom:14px">
+      درخواستت برای مدیر ارسال می‌شه. بعد از تأیید، ادمین می‌شی.
+    </p>
+    <div class="field">
+      <label>دلیل درخواست (اختیاری)</label>
+      <textarea id="requestReason" rows="3" placeholder="چرا می‌خوای ادمین بشی؟"></textarea>
+    </div>
+    <div id="requestStatus" style="font-size:13px;margin-top:10px"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" id="closeRequestBtn">بستن</button>
+      <button class="send-btn" id="submitRequest">📤 ارسال درخواست</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     مودال: تگ‌های گفتگو
+     ═══════════════════════════════════════════════════════════ -->
+<div class="modal" id="tagModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>🏷️ تگ‌های گفتگو</h3>
+      <button class="modal-close" id="closeTag">✕</button>
+    </div>
+    <div class="field">
+      <label>تگ‌ها (با کاما جدا کن)</label>
+      <input type="text" id="tagInput" placeholder="مثلاً: کد, پروژه, ایده" />
+    </div>
+    <div class="tag-suggestions" id="tagSuggestions"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" id="closeTagBtn">بستن</button>
+      <button class="send-btn" id="saveTag">💾 ذخیره</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     مودال: حافظه بلندمدت
+     ═══════════════════════════════════════════════════════════ -->
+<div class="modal" id="memoryModal">
+  <div class="modal-box" style="max-width:560px">
+    <div class="modal-header">
+      <h3>🧠 حافظه بلندمدت</h3>
+      <button class="modal-close" id="closeMemory">✕</button>
+    </div>
+    <p class="hint">اطلاعاتی که AI درباره‌ی تو یاد می‌گیره و توی همه‌ی گفتگوها استفاده می‌کنه.</p>
+
+    <div class="memory-add">
+      <input type="text" id="memKey" placeholder="کلید (مثلاً: نام من)" />
+      <input type="text" id="memValue" placeholder="مقدار (مثلاً: علی)" />
+      <button class="send-btn" id="addMemory">➕</button>
+    </div>
+
+    <div class="memory-list" id="memoryList"></div>
+
+    <div class="modal-actions">
+      <button class="btn-ghost" id="closeMemoryBtn">بستن</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     Command Palette
+     ═══════════════════════════════════════════════════════════ -->
+<div class="modal" id="commandPalette">
+  <div class="modal-box palette-box">
+    <div class="palette-input-wrap">
+      <span class="palette-icon">🔍</span>
+      <input type="text" id="paletteInput" placeholder="جستجوی فرمان..." autocomplete="off" />
+    </div>
+    <div class="palette-list" id="paletteList"></div>
+    <div class="palette-hint">
+      <kbd>↑↓</kbd> حرکت &nbsp;•&nbsp; <kbd>Enter</kbd> اجرا &nbsp;•&nbsp; <kbd>Esc</kbd> بستن
+    </div>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

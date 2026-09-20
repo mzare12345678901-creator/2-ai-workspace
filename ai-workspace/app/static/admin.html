@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>پنل ادمین</title>
+<link rel="stylesheet" href="/static/style.css" />
+<style>
+  body { overflow: auto; padding: 20px; }
+  .container { max-width: 1200px; margin: 0 auto; }
+  h1 { margin-bottom: 20px; }
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 24px; }
+  .stat-card { background: var(--bg2); padding: 16px; border-radius: 12px; border: 1px solid var(--border); }
+  .stat-card .num { font-size: 28px; font-weight: bold; color: var(--accent); }
+  .stat-card .lbl { font-size: 12px; color: var(--fg2); margin-top: 4px; }
+  table { width: 100%; border-collapse: collapse; background: var(--bg2); border-radius: 12px; overflow: hidden; }
+  th, td { padding: 12px; text-align: right; border-bottom: 1px solid var(--border); font-size: 13px; }
+  th { background: var(--bg3); font-weight: bold; }
+  tr:hover { background: var(--bg3); }
+  .badge { padding: 3px 8px; border-radius: 6px; font-size: 11px; }
+  .badge.admin { background: #6c8eff; color: #fff; }
+  .badge.user { background: var(--bg3); color: var(--fg2); }
+  .badge.active { background: #22c55e; color: #fff; }
+  .badge.inactive { background: #ef4444; color: #fff; }
+  .btn-sm { padding: 5px 10px; font-size: 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg3); color: var(--fg); cursor: pointer; margin: 0 2px; }
+  .btn-sm:hover { background: var(--accent); color: #fff; }
+  .btn-sm.danger:hover { background: #ef4444; }
+  .modal { position: fixed; inset: 0; background: rgba(0,0,0,.7); display: none; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
+  .modal.open { display: flex; }
+  .modal-box { background: var(--bg2); padding: 20px; border-radius: 14px; max-width: 700px; width: 100%; max-height: 85vh; overflow-y: auto; }
+  .conv-item { padding: 10px; border-bottom: 1px solid var(--border); cursor: pointer; }
+  .conv-item:hover { background: var(--bg3); }
+  .msg-item { padding: 10px; margin-bottom: 8px; border-radius: 8px; font-size: 13px; white-space: pre-wrap; }
+  .msg-item.user { background: var(--user); }
+  .msg-item.assistant { background: var(--ai); border: 1px solid var(--border); }
+  .back-link { display: inline-block; margin-bottom: 16px; color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="/" class="back-link">← بازگشت به چت</a>
+  <h1>👑 پنل مدیریت</h1>
+
+  <div class="stats-grid" id="stats"></div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>نام کاربری</th>
+        <th>ایمیل</th>
+        <th>نقش</th>
+        <th>وضعیت</th>
+        <th>تاریخ ثبت‌نام</th>
+        <th>گفتگوها</th>
+        <th>پیام‌ها</th>
+        <th>فایل‌ها</th>
+        <th>عملیات</th>
+      </tr>
+    </thead>
+    <tbody id="usersTable"></tbody>
+  </table>
+</div>
+
+<div class="modal" id="userModal">
+  <div class="modal-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <h3 id="modalTitle">گفتگوهای کاربر</h3>
+      <button class="btn-sm" onclick="closeModal()">✕ بستن</button>
+    </div>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const TOKEN = localStorage.getItem("token");
+
+const origFetch = window.fetch;
+window.fetch = function(url, opts = {}) {
+  if (typeof url === "string" && url.startsWith("/api/") && TOKEN) {
+    opts.headers = opts.headers || {};
+    opts.headers["Authorization"] = "Bearer " + TOKEN;
+  }
+  return origFetch(url, opts);
+};
+
+let currentUsername = null;
+
+async function loadStats() {
+  const s = await fetch("/api/admin/stats").then(r => r.json());
+  $("stats").innerHTML = `
+    <div class="stat-card"><div class="num">${s.total_users}</div><div class="lbl">کل کاربران</div></div>
+    <div class="stat-card"><div class="num">${s.active_users}</div><div class="lbl">کاربران فعال</div></div>
+    <div class="stat-card"><div class="num">${s.total_conversations}</div><div class="lbl">کل گفتگوها</div></div>
+    <div class="stat-card"><div class="num">${s.total_messages}</div><div class="lbl">کل پیام‌ها</div></div>
+    <div class="stat-card"><div class="num">${s.total_files}</div><div class="lbl">کل فایل‌ها</div></div>
+  `;
+}
+
+async function loadUsers() {
+  const users = await fetch("/api/admin/users").then(r => r.json());
+  const tb = $("usersTable");
+  tb.innerHTML = "";
+  users.forEach(u => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${u.id}</td>
+      <td>${u.username}</td>
+      <td>${u.email}</td>
+      <td>${u.is_admin ? '<span class="badge admin">ادمین</span>' : '<span class="badge user">کاربر</span>'}</td>
+      <td>${u.is_active ? '<span class="badge active">فعال</span>' : '<span class="badge inactive">غیرفعال</span>'}</td>
+      <td>${new Date(u.created_at).toLocaleDateString("fa-IR")}</td>
+      <td>${u.conversation_count}</td>
+      <td>${u.message_count}</td>
+      <td>${u.file_count}</td>
+      <td>
+        <button class="btn-sm" onclick="viewConversations(${u.id}, '${u.username}')">💬 گفتگوها</button>
+        <button class="btn-sm" onclick="toggleActive(${u.id})">${u.is_active ? "🚫" : "✅"}</button>
+        <button class="btn-sm" onclick="toggleAdmin(${u.id})">${u.is_admin ? "👤" : "👑"}</button>
+        <button class="btn-sm danger" onclick="deleteUser(${u.id})">🗑️</button>
+      </td>
+    `;
+    tb.appendChild(tr);
+  });
+}
+
+async function viewConversations(uid, username) {
+  currentUsername = username;
+  $("modalTitle").textContent = `گفتگوهای ${username}`;
+  const convs = await fetch(`/api/admin/users/${uid}/conversations`).then(r => r.json());
+  const c = $("modalContent");
+  if (!convs.length) { c.innerHTML = "<p>هیچ گفتگویی ندارد.</p>"; }
+  else {
+    c.innerHTML = "";
+    convs.forEach(cv => {
+      const d = document.createElement("div");
+      d.className = "conv-item";
+      d.innerHTML = `💬 ${cv.title} <small style="color:var(--fg2)">(${new Date(cv.created_at).toLocaleDateString("fa-IR")})</small>`;
+      d.onclick = () => viewMessages(cv.id);
+      c.appendChild(d);
+    });
+  }
+  $("userModal").classList.add("open");
+}
+
+async function viewMessages(cid) {
+  const msgs = await fetch(`/api/admin/conversations/${cid}/messages`).then(r => r.json());
+  const c = $("modalContent");
+  c.innerHTML = `<button class="btn-sm" onclick="backToConversations()">← بازگشت</button>`;
+  msgs.forEach(m => {
+    const d = document.createElement("div");
+    d.className = "msg-item " + m.role;
+    d.innerHTML = `<b>${m.role === "user" ? "کاربر" : "ربات"}:</b><br>${escapeHtml(m.content)}`;
+    c.appendChild(d);
+  });
+}
+
+async function backToConversations() {
+  const users = await fetch("/api/admin/users").then(r => r.json());
+  const u = users.find(x => x.username === currentUsername);
+  if (u) viewConversations(u.id, currentUsername);
+}
+
+function closeModal() { $("userModal").classList.remove("open"); }
+
+async function toggleActive(uid) {
+  await fetch(`/api/admin/users/${uid}/toggle-active`, { method: "POST" });
+  loadUsers();
+}
+
+async function toggleAdmin(uid) {
+  await fetch(`/api/admin/users/${uid}/toggle-admin`, { method: "POST" });
+  loadUsers();
+}
+
+async function deleteUser(uid) {
+  if (!confirm("مطمئنی می‌خوای این کاربر رو حذف کنی؟")) return;
+  await fetch(`/api/admin/users/${uid}`, { method: "DELETE" });
+  loadUsers();
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+if (!TOKEN) location.href = "/";
+loadStats();
+loadUsers();
+</script>
+</body>
+</html>
