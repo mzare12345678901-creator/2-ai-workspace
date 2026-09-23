@@ -1,36 +1,59 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from datetime import datetime
 from app.database import get_db
 from app.models import User, Referral, AppSettings, Purchase
-from app.schemas import ReferralInfo, ReferralOut, PurchaseIn, PurchaseOut, ThemeUnlockIn
-from app.auth import get_current_user, get_current_admin
-from datetime import datetime
+from app.schemas import (
+    ReferralInfo,
+    ReferralOut,
+    PurchaseIn,
+    PurchaseOut,
+    ThemeUnlockIn,
+)
+from app.auth import get_current_user
 
 router = APIRouter(prefix="/api/referral", tags=["referral"])
 
 
+# ═══════════════════════════════════════════════════════════════
+# Helpers
+# ═══════════════════════════════════════════════════════════════
 def get_app_settings(db: Session) -> AppSettings:
     s = db.query(AppSettings).first()
     if not s:
         s = AppSettings(id=1)
-        db.add(s); db.commit(); db.refresh(s)
+        db.add(s)
+        db.commit()
+        db.refresh(s)
     return s
 
 
+# ═══════════════════════════════════════════════════════════════
+# اطلاعات دعوت
+# ═══════════════════════════════════════════════════════════════
 @router.get("/info", response_model=ReferralInfo)
-def get_referral_info(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    refs = db.query(Referral).filter(Referral.referrer_id == user.id)\
-             .order_by(Referral.created_at.desc()).all()
+def get_referral_info(
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    refs = (
+        db.query(Referral)
+        .filter(Referral.referrer_id == user.id)
+        .order_by(Referral.created_at.desc())
+        .all()
+    )
 
     result = []
     for r in refs:
         u = db.query(User).get(r.referred_id)
-        result.append(ReferralOut(
-            id=r.id,
-            username=u.username if u else "کاربر حذف‌شده",
-            tokens_awarded=r.tokens_awarded,
-            created_at=r.created_at,
-        ))
+        result.append(
+            ReferralOut(
+                id=r.id,
+                username=u.username if u else "کاربر حذف‌شده",
+                tokens_awarded=r.tokens_awarded,
+                created_at=r.created_at,
+            )
+        )
 
     s = get_app_settings(db)
 
@@ -44,6 +67,9 @@ def get_referral_info(user: User = Depends(get_current_user), db: Session = Depe
     )
 
 
+# ═══════════════════════════════════════════════════════════════
+# باز کردن تم گیمینگ
+# ═══════════════════════════════════════════════════════════════
 @router.post("/unlock-gaming-theme")
 def unlock_gaming_theme(
     data: ThemeUnlockIn,
@@ -60,12 +86,16 @@ def unlock_gaming_theme(
         if user.tokens < needed:
             raise HTTPException(
                 400,
-                f"توکن کافی نداری. نیاز: {needed} توکن، موجودی: {user.tokens}"
+                f"توکن کافی نداری. نیاز: {needed} توکن، موجودی: {user.tokens}",
             )
         user.tokens -= needed
         user.gaming_theme_unlocked = True
         db.commit()
-        return {"ok": True, "message": "تم گیمینگ با توکن فعال شد!", "remaining_tokens": user.tokens}
+        return {
+            "ok": True,
+            "message": "تم گیمینگ با توکن فعال شد!",
+            "remaining_tokens": user.tokens,
+        }
 
     elif data.method == "payment":
         price = s.gaming_theme_price
@@ -75,7 +105,8 @@ def unlock_gaming_theme(
             price_toman=price,
             status="pending",
         )
-        db.add(purchase); db.commit()
+        db.add(purchase)
+        db.commit()
         return {
             "ok": True,
             "message": "درخواست پرداخت ثبت شد. پس از تأیید ادمین، تم فعال می‌شه.",
@@ -85,6 +116,9 @@ def unlock_gaming_theme(
     raise HTTPException(400, "روش نامعتبر")
 
 
+# ═══════════════════════════════════════════════════════════════
+# خرید جدید
+# ═══════════════════════════════════════════════════════════════
 @router.post("/purchase", response_model=PurchaseOut)
 def create_purchase(
     data: PurchaseIn,
@@ -102,20 +136,45 @@ def create_purchase(
         note=data.note,
         status="pending",
     )
-    db.add(p); db.commit(); db.refresh(p)
+    db.add(p)
+    db.commit()
+    db.refresh(p)
 
     return PurchaseOut(
-        id=p.id, user_id=user.id, username=user.username,
-        item=p.item, price_toman=p.price_toman, status=p.status,
-        payment_ref=p.payment_ref, note=p.note, created_at=p.created_at,
+        id=p.id,
+        user_id=user.id,
+        username=user.username,
+        item=p.item,
+        price_toman=p.price_toman,
+        status=p.status,
+        payment_ref=p.payment_ref or "",
+        note=p.note or "",
+        created_at=p.created_at,
     )
 
 
+# ═══════════════════════════════════════════════════════════════
+# خریدهای من
+# ═══════════════════════════════════════════════════════════════
 @router.get("/my-purchases")
-def my_purchases(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    items = db.query(Purchase).filter(Purchase.user_id == user.id)\
-              .order_by(Purchase.created_at.desc()).all()
-    return [{
-        "id": p.id, "item": p.item, "price": p.price_toman,
-        "status": p.status, "note": p.note, "created_at": p.created_at,
-    } for p in items]
+def my_purchases(
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    items = (
+        db.query(Purchase)
+        .filter(Purchase.user_id == user.id)
+        .order_by(Purchase.created_at.desc())
+        .all()
+    )
+    return [
+        {
+            "id": p.id,
+            "item": p.item,
+            "price": p.price_toman,
+            "status": p.status,
+            "note": p.note or "",
+            "created_at": p.created_at.isoformat() if p.created_at else None,
+        }
+        for p in items
+    ]
