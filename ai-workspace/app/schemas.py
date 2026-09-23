@@ -8,6 +8,8 @@ class UserRegister(BaseModel):
     username: str
     email: EmailStr
     password: str
+    referral_code: Optional[str] = None
+
 
 class UserOut(BaseModel):
     id: int
@@ -16,19 +18,26 @@ class UserOut(BaseModel):
     is_admin: bool = False
     is_active: bool = True
     theme: str = "dark"
+    tokens: int = 0
+    referral_code: str = ""
+    gaming_theme_unlocked: bool = False
     class Config:
         orm_mode = True
+
 
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user: UserOut
 
+
 class ThemeUpdate(BaseModel):
     theme: str
 
+
 class AdminRequestIn(BaseModel):
     reason: str = ""
+
 
 class AdminRequestOut(BaseModel):
     id: int
@@ -42,6 +51,49 @@ class AdminRequestOut(BaseModel):
         orm_mode = True
 
 
+# ═══ Referral / Tokens ═══
+class ReferralOut(BaseModel):
+    id: int
+    username: str
+    tokens_awarded: int
+    created_at: datetime
+    class Config:
+        orm_mode = True
+
+
+class ReferralInfo(BaseModel):
+    my_code: str
+    total_referrals: int
+    total_tokens_earned: int
+    tokens_per_referral: int
+    referrals: List[ReferralOut] = []
+    share_link: str = ""
+
+
+class PurchaseIn(BaseModel):
+    item: str
+    payment_ref: str = ""
+    note: str = ""
+
+
+class PurchaseOut(BaseModel):
+    id: int
+    user_id: int
+    username: str = ""
+    item: str
+    price_toman: int
+    status: str
+    payment_ref: str = ""
+    note: str = ""
+    created_at: datetime
+    class Config:
+        orm_mode = True
+
+
+class ThemeUnlockIn(BaseModel):
+    method: str = "tokens"
+
+
 # ═══ Chat ═══
 class ChatRequest(BaseModel):
     conversation_id: Optional[int] = None
@@ -49,9 +101,11 @@ class ChatRequest(BaseModel):
     file_ids: List[int] = []
     stream: Optional[bool] = None
 
+
 class ChatResponse(BaseModel):
     conversation_id: int
     reply: str
+
 
 class MessageOut(BaseModel):
     id: int
@@ -63,8 +117,10 @@ class MessageOut(BaseModel):
     class Config:
         orm_mode = True
 
+
 class MessageEdit(BaseModel):
     content: str
+
 
 class ConversationOut(BaseModel):
     id: int
@@ -78,6 +134,7 @@ class ConversationOut(BaseModel):
     updated_at: Optional[datetime] = None
     class Config:
         orm_mode = True
+
 
 class ConversationUpdate(BaseModel):
     title: Optional[str] = None
@@ -93,6 +150,7 @@ class MemoryIn(BaseModel):
     value: str
     category: str = "general"
     importance: int = 5
+
 
 class MemoryOut(BaseModel):
     id: int
@@ -126,6 +184,7 @@ class UserSettingsOut(BaseModel):
     show_agent_timeline: bool = True
     class Config:
         orm_mode = True
+
 
 class UserSettingsIn(BaseModel):
     font_size: Optional[int] = None
@@ -176,8 +235,13 @@ class AppSettingsOut(BaseModel):
     default_model: str = "gpt-4o-mini"
     default_temperature: float = 0.7
     default_streaming: bool = True
+    referral_enabled: bool = True
+    referral_tokens: int = 10
+    gaming_theme_price: int = 50000
+    gaming_theme_token_price: int = 50
     class Config:
         orm_mode = True
+
 
 class AppSettingsIn(BaseModel):
     ai_api_key: Optional[str] = None
@@ -207,6 +271,10 @@ class AppSettingsIn(BaseModel):
     default_model: Optional[str] = None
     default_temperature: Optional[float] = None
     default_streaming: Optional[bool] = None
+    referral_enabled: Optional[bool] = None
+    referral_tokens: Optional[int] = None
+    gaming_theme_price: Optional[int] = None
+    gaming_theme_token_price: Optional[int] = None
 
 
 # ═══ Admin Panel ═══
@@ -217,11 +285,15 @@ class AdminUserOut(BaseModel):
     is_active: bool
     is_admin: bool
     created_at: datetime
+    tokens: int = 0
+    referral_code: str = ""
+    gaming_theme_unlocked: bool = False
     conversation_count: int = 0
     message_count: int = 0
     file_count: int = 0
     class Config:
         orm_mode = True
+
 
 class AdminStats(BaseModel):
     total_users: int
@@ -230,16 +302,9 @@ class AdminStats(BaseModel):
     total_messages: int
     total_files: int
     pending_requests: int = 0
+    pending_purchases: int = 0
+    total_referrals: int = 0
 
-class AuditLogOut(BaseModel):
-    id: int
-    username: str
-    action: str
-    details: str
-    ip: str
-    created_at: datetime
-    class Config:
-        orm_mode = True
 
 class SettingsIn(BaseModel):
     api_key: Optional[str] = None
