@@ -1,6 +1,11 @@
-// ═══════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════════════════
+   🧠 AI WORKSPACE — app.js
+   نسخه: 3.0.0
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+// ═══════════════════════════════════════════════════════════════
 // Globals
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 let TOKEN = localStorage.getItem("token");
 let isRegister = false;
 let currentUser = null;
@@ -15,9 +20,9 @@ let abortController = null;
 
 const $ = (id) => document.getElementById(id);
 
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 // Toast
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 function toast(msg, type = "") {
   let cont = document.querySelector(".toast-container");
   if (!cont) {
@@ -32,91 +37,122 @@ function toast(msg, type = "") {
   setTimeout(() => t.remove(), 3000);
 }
 
-// ═══════════════════════════════════════
-// Auth Screen Toggle (فیکس اصلی)
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+// Auth Screen Toggle
+// ═══════════════════════════════════════════════════════════════
 function showAuth() {
   const auth = $("authScreen");
   const main = $("mainApp");
   if (auth) auth.classList.remove("hidden");
-  if (main) main.style.display = "none";
+  if (main) main.classList.add("hidden");
 }
 
 function hideAuth() {
   const auth = $("authScreen");
   const main = $("mainApp");
   if (auth) auth.classList.add("hidden");
-  if (main) main.style.display = "flex";
+  if (main) main.classList.remove("hidden");
 }
 
+// ═══════════════════════════════════════════════════════════════
+// Fetch interceptor (اضافه کردن توکن)
+// ═══════════════════════════════════════════════════════════════
 const origFetch = window.fetch;
 window.fetch = function(url, opts = {}) {
   if (typeof url === "string" && url.startsWith("/api/") && TOKEN) {
     opts.headers = opts.headers || {};
-    if (opts.headers instanceof Headers) opts.headers.set("Authorization", "Bearer " + TOKEN);
-    else opts.headers["Authorization"] = "Bearer " + TOKEN;
+    if (opts.headers instanceof Headers) {
+      opts.headers.set("Authorization", "Bearer " + TOKEN);
+    } else {
+      opts.headers["Authorization"] = "Bearer " + TOKEN;
+    }
   }
   return origFetch(url, opts);
 };
 
-// ═══════════════════════════════════════
-// Themes
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+// THEMES — ۱۱ تم
+// ═══════════════════════════════════════════════════════════════
 const THEMES = [
-  { id: "dark", name: "شبانه", bg: "#0f1117", accent: "#6c8eff" },
-  { id: "light", name: "روزانه", bg: "#f6f7fb", accent: "#4f6cff" },
-  { id: "ocean", name: "اقیانوس", bg: "#0a1929", accent: "#06b6d4" },
-  { id: "sunset", name: "غروب", bg: "#1a0f0a", accent: "#f97316" },
-  { id: "forest", name: "جنگل", bg: "#0a1410", accent: "#22c55e" },
-  { id: "purple", name: "بنفش", bg: "#1a0f2e", accent: "#a855f7" },
-  { id: "rose", name: "رز", bg: "#1f0f18", accent: "#f43f5e" },
-  { id: "cyberpunk", name: "سایبر", bg: "#0a0a14", accent: "#ec4899" },
-  { id: "coffee", name: "قهوه", bg: "#1a120b", accent: "#c084fc" },
-  { id: "mono", name: "تک‌رنگ", bg: "#000000", accent: "#ffffff" },
+  { id: "dark",      name: "شبانه",   bg: "#0f1117", accent: "#6c8eff" },
+  { id: "light",     name: "روزانه",  bg: "#f6f7fb", accent: "#4f6cff" },
+  { id: "ocean",     name: "اقیانوس", bg: "#0a1929", accent: "#06b6d4" },
+  { id: "sunset",    name: "غروب",    bg: "#1a0f0a", accent: "#f97316" },
+  { id: "forest",    name: "جنگل",    bg: "#0a1410", accent: "#22c55e" },
+  { id: "purple",    name: "بنفش",    bg: "#1a0f2e", accent: "#a855f7" },
+  { id: "rose",      name: "رز",      bg: "#1f0f18", accent: "#f43f5e" },
+  { id: "cyberpunk", name: "سایبر",   bg: "#0a0a14", accent: "#ec4899" },
+  { id: "coffee",    name: "قهوه",    bg: "#1a120b", accent: "#c084fc" },
+  { id: "mono",      name: "تک‌رنگ",  bg: "#000000", accent: "#ffffff" },
+  { id: "gaming",    name: "🎮 گیمینگ", bg: "#05060d", accent: "#8b5cf6", locked: true },
 ];
 
 function applyTheme(id) {
   document.documentElement.setAttribute("data-theme", id);
   localStorage.setItem("theme", id);
 }
+
 function renderThemeGrid() {
-  const grid = $("themeGrid"); if (!grid) return;
+  const grid = $("themeGrid");
+  if (!grid) return;
   grid.innerHTML = "";
   const cur = localStorage.getItem("theme") || "dark";
+  const isGamingUnlocked = currentUser && currentUser.gaming_theme_unlocked;
+
   THEMES.forEach(t => {
     const d = document.createElement("div");
-    d.className = "theme-swatch" + (t.id === cur ? " active" : "");
+    const isLocked = t.locked && !isGamingUnlocked;
+
+    d.className = "theme-swatch" + (t.id === cur ? " active" : "") + (isLocked ? " locked" : "");
+    if (t.id === "gaming") {
+      d.classList.add("gaming-swatch");
+      if (isGamingUnlocked) d.classList.add("unlocked");
+    }
     d.style.background = `linear-gradient(135deg, ${t.bg}, ${t.accent})`;
     d.innerHTML = `<span>${t.name}</span>`;
+
     d.onclick = async () => {
+      if (isLocked) {
+        if ($("gamingModal")) {
+          $("gamingModal").classList.add("open");
+          if (typeof loadGamingStatus === "function") loadGamingStatus();
+        }
+        return;
+      }
       applyTheme(t.id);
       renderThemeGrid();
-      if (TOKEN) try {
-        await fetch("/api/auth/theme", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ theme: t.id })
-        });
-      } catch {}
+      if (TOKEN) {
+        try {
+          await fetch("/api/auth/theme", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ theme: t.id }),
+          });
+        } catch {}
+      }
     };
+
     grid.appendChild(d);
   });
 }
+
 applyTheme(localStorage.getItem("theme") || "dark");
 
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 // Markdown + LaTeX + Mermaid
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 if (window.marked) {
   marked.setOptions({
     breaks: true,
     gfm: true,
-    highlight: function(code, lang) {
+    highlight: function (code, lang) {
       if (window.hljs && lang && hljs.getLanguage(lang)) {
-        try { return hljs.highlight(code, { language: lang }).value; } catch {}
+        try {
+          return hljs.highlight(code, { language: lang }).value;
+        } catch {}
       }
       return code;
-    }
+    },
   });
 }
 
@@ -139,7 +175,7 @@ function renderMarkdown(text, targetEl) {
           { left: "\\[", right: "\\]", display: true },
           { left: "\\(", right: "\\)", display: false },
         ],
-        throwOnError: false
+        throwOnError: false,
       });
     } catch {}
   }
@@ -162,11 +198,12 @@ function renderMarkdown(text, targetEl) {
     });
   }
 
-  // Code Toolbar
-  targetEl.querySelectorAll("pre").forEach(pre => {
+  // Code toolbar
+  targetEl.querySelectorAll("pre").forEach((pre) => {
     if (pre.querySelector(".code-toolbar")) return;
     const code = pre.querySelector("code");
     if (!code) return;
+
     const toolbar = document.createElement("div");
     toolbar.className = "code-toolbar";
     toolbar.innerHTML = `
@@ -192,16 +229,24 @@ function renderMarkdown(text, targetEl) {
 }
 
 function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, c => ({
-    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  return String(s).replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
   }[c]));
 }
 
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 // Check Auth
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 async function checkAuth() {
-  if (!TOKEN) { showAuth(); return; }
+  if (!TOKEN) {
+    showAuth();
+    return;
+  }
+
   try {
     const r = await fetch("/api/auth/me");
     if (!r.ok) throw new Error();
@@ -209,20 +254,24 @@ async function checkAuth() {
     hideAuth();
     applyTheme(currentUser.theme || "dark");
 
-    // User info
-    const ui = $("userInfo");
-    if (ui) {
-      $("userAvatar").textContent = (currentUser.username || "?").charAt(0).toUpperCase();
-      $("userName").textContent = currentUser.username;
+    // User info در سایدبار
+    if ($("userAvatar")) $("userAvatar").textContent = (currentUser.username || "?").charAt(0).toUpperCase();
+    if ($("userName")) $("userName").textContent = currentUser.username;
+    if ($("userRole")) {
       $("userRole").textContent = currentUser.is_admin ? "👑 ادمین" : "کاربر";
       $("userRole").className = "user-role" + (currentUser.is_admin ? " admin" : "");
     }
 
+    // توکن‌ها
+    updateTokensDisplay(currentUser.tokens || 0);
+
+    // Settings
     try {
-      userSettings = await fetch("/api/settings/user").then(r => r.json());
+      userSettings = await fetch("/api/settings/user").then((r) => r.json());
       applyUserSettings(userSettings);
     } catch {}
 
+    // نمایش دکمه‌ها بر اساس نقش
     if (currentUser.is_admin) {
       if ($("adminLink")) $("adminLink").style.display = "flex";
       if ($("openAdminSettings")) $("openAdminSettings").style.display = "flex";
@@ -232,9 +281,9 @@ async function checkAuth() {
       if ($("openAdminSettings")) $("openAdminSettings").style.display = "none";
       if ($("requestAdminBtn")) $("requestAdminBtn").style.display = "flex";
       try {
-        const req = await fetch("/api/auth/my-admin-request").then(r => r.ok ? r.json() : null);
+        const req = await fetch("/api/auth/my-admin-request").then((r) => (r.ok ? r.json() : null));
         if (req && req.status === "pending" && $("requestAdminBtn")) {
-          $("requestAdminBtn").innerHTML = '<span>⏳</span> در انتظار تأیید';
+          $("requestAdminBtn").innerHTML = "<span>⏳</span> در انتظار تأیید";
         }
       } catch {}
     }
@@ -255,16 +304,17 @@ function applyUserSettings(s) {
   if (ap) ap.style.display = s.show_agent_timeline ? "block" : "none";
 }
 
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 // Login / Register
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 if ($("authToggle")) {
   $("authToggle").onclick = (e) => {
     e.preventDefault();
     isRegister = !isRegister;
     $("authTitle").textContent = isRegister ? "📝 ثبت‌نام" : "🔐 ورود به حساب";
     $("authSubtitle").textContent = isRegister ? "حساب جدید بساز" : "به AI Workspace خوش آمدی";
-    $("authEmailField").style.display = isRegister ? "block" : "none";
+    if ($("authEmailField")) $("authEmailField").style.display = isRegister ? "block" : "none";
+    if ($("authReferralField")) $("authReferralField").style.display = isRegister ? "block" : "none";
     $("authSubmitText").textContent = isRegister ? "ثبت‌نام" : "ورود به حساب";
     $("authToggleText").textContent = isRegister ? "حساب داری؟" : "حساب نداری؟";
     $("authToggle").textContent = isRegister ? "وارد شو" : "ثبت‌نام کن";
@@ -283,7 +333,8 @@ if ($("authSubmit")) {
   $("authSubmit").onclick = async () => {
     const username = $("authUsername").value.trim();
     const password = $("authPassword").value;
-    const email = $("authEmail").value.trim();
+    const email = $("authEmail") ? $("authEmail").value.trim() : "";
+    const referral = $("authReferral") ? $("authReferral").value.trim() : "";
     const err = $("authError");
     err.classList.remove("show");
 
@@ -306,7 +357,7 @@ if ($("authSubmit")) {
         r = await fetch("/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, email, password }),
+          body: JSON.stringify({ username, email, password, referral_code: referral || null }),
         });
       } else {
         const fd = new FormData();
@@ -329,9 +380,9 @@ if ($("authSubmit")) {
   };
 }
 
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 // Logout
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 if ($("logoutBtn")) {
   $("logoutBtn").onclick = () => {
     TOKEN = null;
@@ -343,12 +394,41 @@ if ($("logoutBtn")) {
   };
 }
 
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 // Sidebar
-// ═══════════════════════════════════════
-if ($("menuBtn")) $("menuBtn").onclick = () => $("sidebar").classList.toggle("hidden");
-if ($("closeSidebarMobile")) $("closeSidebarMobile").onclick = () => $("sidebar").classList.add("hidden");
+// ═══════════════════════════════════════════════════════════════
+function toggleSidebar() {
+  const sidebar = $("sidebar");
+  const overlay = $("sidebarOverlay");
+  if (!sidebar) return;
+  const isNowHidden = sidebar.classList.toggle("hidden");
+  if (overlay) {
+    if (isNowHidden) {
+      overlay.classList.remove("show");
+    } else if (window.innerWidth <= 760) {
+      overlay.classList.add("show");
+    }
+  }
+}
 
+function closeSidebar() {
+  const sidebar = $("sidebar");
+  const overlay = $("sidebarOverlay");
+  if (sidebar) sidebar.classList.add("hidden");
+  if (overlay) overlay.classList.remove("show");
+}
+
+if ($("menuBtn")) $("menuBtn").onclick = toggleSidebar;
+if ($("closeSidebarMobile")) $("closeSidebarMobile").onclick = closeSidebar;
+if ($("sidebarOverlay")) $("sidebarOverlay").onclick = closeSidebar;
+
+window.addEventListener("resize", () => {
+  if (window.innerWidth > 760 && $("sidebarOverlay")) {
+    $("sidebarOverlay").classList.remove("show");
+  }
+});
+
+// Search
 if ($("searchInput")) {
   $("searchInput").addEventListener("input", (e) => {
     currentSearch = e.target.value.trim();
@@ -356,6 +436,7 @@ if ($("searchInput")) {
     loadConversations();
   });
 }
+
 if ($("clearSearch")) {
   $("clearSearch").onclick = () => {
     $("searchInput").value = "";
@@ -365,18 +446,18 @@ if ($("clearSearch")) {
   };
 }
 
-document.querySelectorAll(".filter-tab").forEach(t => {
+document.querySelectorAll(".filter-tab").forEach((t) => {
   t.onclick = () => {
-    document.querySelectorAll(".filter-tab").forEach(x => x.classList.remove("active"));
+    document.querySelectorAll(".filter-tab").forEach((x) => x.classList.remove("active"));
     t.classList.add("active");
     currentFilter = t.dataset.filter;
     loadConversations();
   };
 });
 
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 // Conversations
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 async function loadConversations() {
   try {
     const params = new URLSearchParams();
@@ -384,19 +465,19 @@ async function loadConversations() {
     if (currentFilter === "favorite") params.set("favorite", "true");
     if (currentSearch) params.set("q", currentSearch);
 
-    const list = await fetch("/api/chat/conversations?" + params.toString()).then(r => r.json());
+    const list = await fetch("/api/chat/conversations?" + params.toString()).then((r) => r.json());
     const el = $("convList");
     el.innerHTML = "";
 
     let filtered = list;
-    if (currentFilter === "pinned") filtered = list.filter(c => c.pinned);
+    if (currentFilter === "pinned") filtered = list.filter((c) => c.pinned);
 
     if (!filtered.length) {
       el.innerHTML = `<div style="padding:20px;text-align:center;font-size:12px;color:var(--fg2)">گفتگویی یافت نشد</div>`;
       return;
     }
 
-    filtered.forEach(c => {
+    filtered.forEach((c) => {
       const d = document.createElement("div");
       d.className = "conv-item" + (c.id === currentConvId ? " active" : "");
       const icons = [];
@@ -440,20 +521,20 @@ async function deleteConv(id) {
 async function openConversation(id) {
   currentConvId = id;
   try {
-    const convs = await fetch("/api/chat/conversations").then(r => r.json());
-    currentConvMeta = convs.find(c => c.id === id);
-    const msgs = await fetch(`/api/chat/conversations/${id}/messages`).then(r => r.json());
+    const convs = await fetch("/api/chat/conversations").then((r) => r.json());
+    currentConvMeta = convs.find((c) => c.id === id);
+    const msgs = await fetch(`/api/chat/conversations/${id}/messages`).then((r) => r.json());
     $("chat").innerHTML = "";
     if (!msgs.length) {
       showWelcomeScreen();
     } else {
-      msgs.forEach(m => {
+      msgs.forEach((m) => {
         addMessage(m.role, m.content, { id: m.id, edited: m.edited, bookmarked: m.bookmarked });
       });
     }
     updateChatHeader();
     loadConversations();
-    $("sidebar").classList.add("hidden");
+    closeSidebar();
   } catch (e) {
     console.error("openConversation error:", e);
   }
@@ -503,7 +584,7 @@ function showWelcomeScreen() {
       </div>
     </div>
   `;
-  document.querySelectorAll(".welcome-card").forEach(card => {
+  document.querySelectorAll(".welcome-card").forEach((card) => {
     card.onclick = () => {
       $("input").value = card.dataset.prompt || "";
       autoResize();
@@ -527,9 +608,9 @@ function updateChatHeader() {
   }
 }
 
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 // Chat Actions
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 async function patchConversation(data) {
   if (!currentConvId) return;
   const r = await fetch(`/api/chat/conversations/${currentConvId}`, {
@@ -595,13 +676,13 @@ function renderTagSuggestions() {
   if (!el) return;
   const suggestions = ["کد", "پروژه", "ایده", "مهم", "شخصی", "کار", "تحقیق"];
   el.innerHTML = "";
-  suggestions.forEach(s => {
+  suggestions.forEach((s) => {
     const b = document.createElement("button");
     b.className = "tag-suggestion";
     b.textContent = s;
     b.onclick = () => {
       const cur = $("tagInput").value.trim();
-      const tags = cur ? cur.split(",").map(x => x.trim()) : [];
+      const tags = cur ? cur.split(",").map((x) => x.trim()) : [];
       if (!tags.includes(s)) tags.push(s);
       $("tagInput").value = tags.join(", ");
     };
@@ -635,17 +716,17 @@ if ($("deleteChat")) $("deleteChat").onclick = () => currentConvId && deleteConv
 if ($("exportAllBtn")) {
   $("exportAllBtn").onclick = async () => {
     toast("📦 در حال آماده‌سازی بکاپ...");
-    const list = await fetch("/api/chat/conversations").then(r => r.json());
+    const list = await fetch("/api/chat/conversations").then((r) => r.json());
     for (const c of list) {
       window.open(`/api/chat/conversations/${c.id}/export?fmt=md`);
-      await new Promise(r => setTimeout(r, 500));
+      await new Promise((r) => setTimeout(r, 500));
     }
   };
 }
 
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 // Messages
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 function addMessage(role, text, meta = {}, streaming = false) {
   const group = document.createElement("div");
   group.className = "msg-group";
@@ -768,9 +849,9 @@ async function continueMessage(mid, oldText, contentEl) {
   }
 }
 
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 // Send
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 async function send() {
   const text = $("input").value.trim();
   if (!text && attachedFiles.length === 0) return;
@@ -790,7 +871,7 @@ async function send() {
   sendBtn.style.display = "none";
   stopBtn.style.display = "flex";
   $("status").classList.add("busy");
-  $("statusText").textContent = "در حال فکر کردن...";
+  if ($("statusText")) $("statusText").textContent = "در حال فکر کردن...";
 
   const steps = ["🧠 تحلیل درخواست", "📋 ساخت Plan", "🛠️ اجرای ابزار", "✅ تولید پاسخ"];
   renderAgentSteps(steps.slice(0, 1));
@@ -815,7 +896,7 @@ async function send() {
         body: JSON.stringify({
           conversation_id: currentConvId,
           message: text,
-          file_ids: attachedFiles.map(f => f.id),
+          file_ids: attachedFiles.map((f) => f.id),
         }),
         signal: abortController.signal,
       });
@@ -861,7 +942,7 @@ async function send() {
         body: JSON.stringify({
           conversation_id: currentConvId,
           message: text,
-          file_ids: attachedFiles.map(f => f.id),
+          file_ids: attachedFiles.map((f) => f.id),
         }),
         signal: abortController.signal,
       });
@@ -890,7 +971,7 @@ async function send() {
     sendBtn.style.display = "flex";
     stopBtn.style.display = "none";
     $("status").classList.remove("busy");
-    $("statusText").textContent = "آماده";
+    if ($("statusText")) $("statusText").textContent = "آماده";
     abortController = null;
   }
 }
@@ -901,12 +982,12 @@ function renderAgentSteps(steps) {
   if (!userSettings?.show_agent_timeline) return;
   const el = $("agentSteps");
   if (!el) return;
-  el.innerHTML = steps.map(s => `<div class="step">${s}</div>`).join("");
+  el.innerHTML = steps.map((s) => `<div class="step">${s}</div>`).join("");
 }
 
 if ($("sendBtn")) $("sendBtn").onclick = send;
 if ($("input")) {
-  $("input").addEventListener("keydown", e => {
+  $("input").addEventListener("keydown", (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       send();
@@ -917,8 +998,7 @@ if ($("input")) {
     if ($("clearInput")) $("clearInput").style.display = $("input").value ? "block" : "none";
     if ($("charCount")) {
       const n = $("input").value.length;
-      const fa = n.toLocaleString("fa-IR");
-      $("charCount").textContent = `${fa} کاراکتر`;
+      $("charCount").textContent = `${n.toLocaleString("fa-IR")} کاراکتر`;
     }
   });
 }
@@ -938,9 +1018,15 @@ if ($("clearInput")) {
   };
 }
 
-// ═══════════════════════════════════════
+if ($("clearAgentTimeline")) {
+  $("clearAgentTimeline").onclick = () => {
+    $("agentSteps").innerHTML = '<div class="step">آماده برای شروع</div>';
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════
 // Files
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 if ($("fileBtn")) $("fileBtn").onclick = () => $("fileInput").click();
 if ($("fileInput")) {
   $("fileInput").onchange = async (e) => {
@@ -979,9 +1065,9 @@ function renderAttached() {
   });
 }
 
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 // Voice
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 if (SR) {
   recognition = new SR();
@@ -1035,13 +1121,13 @@ async function notify(title, body) {
   }
 }
 
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 // Settings Modal
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 if ($("openSettings")) {
   $("openSettings").onclick = async () => {
     try {
-      userSettings = await fetch("/api/settings/user").then(r => r.json());
+      userSettings = await fetch("/api/settings/user").then((r) => r.json());
       loadSettingsToUI(userSettings);
       renderThemeGrid();
       $("settingsModal").classList.add("open");
@@ -1075,7 +1161,7 @@ function loadSettingsToUI(s) {
   setChk("setTimeline", s.show_agent_timeline);
 }
 
-["setFontSize", "setTemp", "setVoiceRate", "setVoicePitch", "setContext"].forEach(id => {
+["setFontSize", "setTemp", "setVoiceRate", "setVoicePitch", "setContext"].forEach((id) => {
   const el = $(id);
   if (!el) return;
   el.oninput = () => {
@@ -1085,10 +1171,10 @@ function loadSettingsToUI(s) {
   };
 });
 
-document.querySelectorAll("#settingsTabs .tab").forEach(t => {
+document.querySelectorAll("#settingsTabs .tab").forEach((t) => {
   t.onclick = () => {
-    document.querySelectorAll("#settingsTabs .tab").forEach(x => x.classList.remove("active"));
-    document.querySelectorAll("#settingsModal .tab-content").forEach(x => x.classList.remove("active"));
+    document.querySelectorAll("#settingsTabs .tab").forEach((x) => x.classList.remove("active"));
+    document.querySelectorAll("#settingsModal .tab-content").forEach((x) => x.classList.remove("active"));
     t.classList.add("active");
     const target = document.querySelector(`#settingsModal .tab-content[data-tab="${t.dataset.tab}"]`);
     if (target) target.classList.add("active");
@@ -1141,11 +1227,10 @@ if ($("saveSettings")) {
 if ($("closeSettings")) $("closeSettings").onclick = () => $("settingsModal").classList.remove("open");
 if ($("closeSettingsBtn")) $("closeSettingsBtn").onclick = () => $("settingsModal").classList.remove("open");
 
-// Clear all chats
 if ($("clearAllChats")) {
   $("clearAllChats").onclick = async () => {
     if (!confirm("همه‌ی گفتگوها حذف شوند؟ این کار برگشت‌پذیر نیست!")) return;
-    const list = await fetch("/api/chat/conversations").then(r => r.json());
+    const list = await fetch("/api/chat/conversations").then((r) => r.json());
     for (const c of list) {
       await fetch(`/api/chat/conversations/${c.id}`, { method: "DELETE" });
     }
@@ -1157,7 +1242,9 @@ if ($("clearAllChats")) {
   };
 }
 
+// ═══════════════════════════════════════════════════════════════
 // Memory Manager
+// ═══════════════════════════════════════════════════════════════
 if ($("openMemoryManager")) {
   $("openMemoryManager").onclick = () => {
     loadMemories();
@@ -1184,36 +1271,180 @@ if ($("addMemory")) {
 }
 
 async function loadMemories() {
-  const list = await fetch("/api/memory/").then(r => r.json());
-  const el = $("memoryList");
-  el.innerHTML = "";
-  if (!list.length) {
-    el.innerHTML = '<p style="color:var(--fg2);font-size:13px;text-align:center;padding:14px">حافظه‌ای ثبت نشده</p>';
-    return;
-  }
-  list.forEach(m => {
-    const d = document.createElement("div");
-    d.className = "memory-item";
-    d.innerHTML = `
-      <span class="mem-key">${escapeHtml(m.key)}</span>
-      <span class="mem-value">${escapeHtml(m.value)}</span>
-      <button class="mem-del" data-id="${m.id}">✕</button>
-    `;
-    d.querySelector(".mem-del").onclick = async () => {
-      await fetch(`/api/memory/${m.id}`, { method: "DELETE" });
-      loadMemories();
-    };
-    el.appendChild(d);
-  });
+  try {
+    const list = await fetch("/api/memory/").then((r) => r.json());
+    const el = $("memoryList");
+    el.innerHTML = "";
+    if (!list.length) {
+      el.innerHTML = '<p style="color:var(--fg2);font-size:13px;text-align:center;padding:14px">حافظه‌ای ثبت نشده</p>';
+      return;
+    }
+    list.forEach((m) => {
+      const d = document.createElement("div");
+      d.className = "memory-item";
+      d.innerHTML = `
+        <span class="mem-key">${escapeHtml(m.key)}</span>
+        <span class="mem-value">${escapeHtml(m.value)}</span>
+        <button class="mem-del" data-id="${m.id}">✕</button>
+      `;
+      d.querySelector(".mem-del").onclick = async () => {
+        await fetch(`/api/memory/${m.id}`, { method: "DELETE" });
+        loadMemories();
+      };
+      el.appendChild(d);
+    });
+  } catch {}
 }
 
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+// 🪙 Tokens & Referral
+// ═══════════════════════════════════════════════════════════════
+function updateTokensDisplay(tokens) {
+  const el = $("tokensCount");
+  if (el) {
+    el.textContent = (tokens || 0).toLocaleString("fa-IR");
+  }
+}
+
+async function loadReferralInfo() {
+  try {
+    const data = await fetch("/api/referral/info").then((r) => r.json());
+    if ($("myRefCode")) $("myRefCode").value = data.my_code || "—";
+    if ($("refCount")) $("refCount").textContent = data.total_referrals || 0;
+    if ($("refTokens")) $("refTokens").textContent = data.total_tokens_earned || 0;
+    if ($("tokensPerRef")) $("tokensPerRef").textContent = data.tokens_per_referral || 10;
+
+    const list = $("refList");
+    list.innerHTML = "";
+    if (!data.referrals || !data.referrals.length) {
+      list.innerHTML = '<p style="color:var(--fg3);font-size:12px;text-align:center;padding:12px">هنوز کسی رو دعوت نکردی</p>';
+    } else {
+      data.referrals.forEach((r) => {
+        const d = document.createElement("div");
+        d.style.cssText = "display:flex;justify-content:space-between;padding:8px 12px;background:var(--bg3);border-radius:8px;margin-bottom:4px;font-size:12px";
+        d.innerHTML = `
+          <span>👤 ${escapeHtml(r.username)}</span>
+          <span style="color:#fbbf24">🪙 +${r.tokens_awarded}</span>
+        `;
+        list.appendChild(d);
+      });
+    }
+  } catch (e) {
+    console.error("referral error:", e);
+  }
+}
+
+if ($("openReferral")) {
+  $("openReferral").onclick = () => {
+    loadReferralInfo();
+    $("referralModal").classList.add("open");
+  };
+}
+if ($("closeReferral")) $("closeReferral").onclick = () => $("referralModal").classList.remove("open");
+if ($("closeReferralBtn")) $("closeReferralBtn").onclick = () => $("referralModal").classList.remove("open");
+if ($("copyRefCode")) {
+  $("copyRefCode").onclick = () => {
+    const code = $("myRefCode").value;
+    navigator.clipboard.writeText(code);
+    toast("✅ کد کپی شد: " + code, "success");
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 🎮 Gaming Theme
+// ═══════════════════════════════════════════════════════════════
+async function loadGamingStatus() {
+  try {
+    const me = await fetch("/api/auth/me").then((r) => r.json());
+    currentUser = me;
+    const statusEl = $("gamingStatus");
+    const actionsEl = $("gamingActions");
+    if (!statusEl || !actionsEl) return;
+
+    if (me.gaming_theme_unlocked) {
+      statusEl.innerHTML = "✅ <b style='color:#22c55e'>تم گیمینگ فعال است!</b> می‌تونی از بخش تم‌ها انتخابش کنی.";
+      actionsEl.innerHTML = `
+        <button class="send-btn" id="applyGaming" style="width:100%;height:48px">
+          🎮 فعال‌سازی تم گیمینگ
+        </button>
+      `;
+      if ($("applyGaming")) {
+        $("applyGaming").onclick = () => {
+          applyTheme("gaming");
+          renderThemeGrid();
+          toast("🎮 تم گیمینگ فعال شد!", "success");
+          $("gamingModal").classList.remove("open");
+        };
+      }
+    } else {
+      statusEl.innerHTML = "🔒 این تم قفله. برای فعال‌سازی یکی از روش‌های زیر رو انتخاب کن:";
+      actionsEl.innerHTML = `
+        <button class="send-btn" id="unlockWithTokens" style="width:100%;height:48px">
+          🪙 فعال‌سازی با توکن
+        </button>
+        <button class="btn-ghost" id="unlockWithPayment" style="height:48px;border-color:#fbbf24;color:#fbbf24">
+          💰 درخواست پرداخت
+        </button>
+      `;
+      if ($("unlockWithTokens")) {
+        $("unlockWithTokens").onclick = async () => {
+          if (!confirm("با توکن فعال کنم؟")) return;
+          const r = await fetch("/api/referral/unlock-gaming-theme", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ method: "tokens" }),
+          });
+          const data = await r.json();
+          if (r.ok) {
+            toast("🎮 تم گیمینگ فعال شد! 🎉", "success");
+            updateTokensDisplay(data.remaining_tokens);
+            loadGamingStatus();
+            renderThemeGrid();
+          } else {
+            toast("❌ " + (data.detail || "خطا"), "error");
+          }
+        };
+      }
+      if ($("unlockWithPayment")) {
+        $("unlockWithPayment").onclick = async () => {
+          const ref = prompt("شماره پیگیری پرداخت رو وارد کن:");
+          if (ref === null) return;
+          const r = await fetch("/api/referral/unlock-gaming-theme", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ method: "payment" }),
+          });
+          const data = await r.json();
+          if (r.ok) {
+            toast("✅ درخواست ثبت شد. منتظر تأیید ادمین باش.", "success");
+            $("gamingModal").classList.remove("open");
+          } else {
+            toast("❌ " + (data.detail || "خطا"), "error");
+          }
+        };
+      }
+    }
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+if ($("openGaming")) {
+  $("openGaming").onclick = () => {
+    loadGamingStatus();
+    $("gamingModal").classList.add("open");
+  };
+}
+if ($("closeGaming")) $("closeGaming").onclick = () => $("gamingModal").classList.remove("open");
+if ($("closeGamingBtn")) $("closeGamingBtn").onclick = () => $("gamingModal").classList.remove("open");
+
+// ═══════════════════════════════════════════════════════════════
 // Admin Settings
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 if ($("openAdminSettings")) {
   $("openAdminSettings").onclick = async () => {
     try {
-      const s = await fetch("/api/settings/admin").then(r => r.json());
+      const s = await fetch("/api/settings/admin").then((r) => r.json());
       const set = (id, v) => { const el = $(id); if (el) el.value = v; };
       const setChk = (id, v) => { const el = $(id); if (el) el.checked = v; };
       const setTxt = (id, v) => { const el = $(id); if (el) el.textContent = v; };
@@ -1222,8 +1453,7 @@ if ($("openAdminSettings")) {
       if ($("admAiKey")) $("admAiKey").placeholder = s.ai_api_key_masked || "sk-...";
       set("admAiUrl", s.ai_base_url || "");
       set("admAiModel", s.ai_model || "");
-      set("admAiTemp", s.ai_temperature);
-      setTxt("admTempVal", s.ai_temperature);
+      set("admAiTemp", s.ai_temperature); setTxt("admTempVal", s.ai_temperature);
       set("admAiMaxTokens", s.ai_max_tokens);
       set("admSysPrompt", s.ai_system_prompt || "");
       setChk("admFallbackEnabled", s.fallback_enabled);
@@ -1246,9 +1476,12 @@ if ($("openAdminSettings")) {
       setChk("admRequireEmail", s.require_email_verification);
       set("admDefTheme", s.default_theme);
       set("admDefModel", s.default_model);
-      set("admDefTemp", s.default_temperature);
-      setTxt("admDefTempVal", s.default_temperature);
+      set("admDefTemp", s.default_temperature); setTxt("admDefTempVal", s.default_temperature);
       setChk("admDefStreaming", s.default_streaming);
+      setChk("admReferralEnabled", s.referral_enabled);
+      set("admReferralTokens", s.referral_tokens);
+      set("admGamingPrice", s.gaming_theme_price);
+      set("admGamingTokenPrice", s.gaming_theme_token_price);
 
       if ($("testApiResult")) $("testApiResult").textContent = "";
       $("adminSettingsModal").classList.add("open");
@@ -1261,10 +1494,10 @@ if ($("openAdminSettings")) {
 if ($("closeAdminSettings")) $("closeAdminSettings").onclick = () => $("adminSettingsModal").classList.remove("open");
 if ($("closeAdminSettingsBtn")) $("closeAdminSettingsBtn").onclick = () => $("adminSettingsModal").classList.remove("open");
 
-document.querySelectorAll("#adminTabs .tab").forEach(t => {
+document.querySelectorAll("#adminTabs .tab").forEach((t) => {
   t.onclick = () => {
-    document.querySelectorAll("#adminTabs .tab").forEach(x => x.classList.remove("active"));
-    document.querySelectorAll("#adminSettingsModal .tab-content").forEach(x => x.classList.remove("active"));
+    document.querySelectorAll("#adminTabs .tab").forEach((x) => x.classList.remove("active"));
+    document.querySelectorAll("#adminSettingsModal .tab-content").forEach((x) => x.classList.remove("active"));
     t.classList.add("active");
     const target = document.querySelector(`#adminSettingsModal .tab-content[data-atab="${t.dataset.atab}"]`);
     if (target) target.classList.add("active");
@@ -1302,6 +1535,10 @@ if ($("saveAdminSettings")) {
       default_model: $("admDefModel").value,
       default_temperature: parseFloat($("admDefTemp").value),
       default_streaming: $("admDefStreaming").checked,
+      referral_enabled: $("admReferralEnabled").checked,
+      referral_tokens: parseInt($("admReferralTokens").value),
+      gaming_theme_price: parseInt($("admGamingPrice").value),
+      gaming_theme_token_price: parseInt($("admGamingTokenPrice").value),
     };
     if ($("admAiKey").value) body.ai_api_key = $("admAiKey").value;
     if ($("admFbKey").value) body.fallback_api_key = $("admFbKey").value;
@@ -1349,9 +1586,9 @@ if ($("testAdminApi")) {
   };
 }
 
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 // Request Admin
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 if ($("requestAdminBtn")) {
   $("requestAdminBtn").onclick = () => {
     $("requestStatus").textContent = "";
@@ -1374,7 +1611,7 @@ if ($("submitRequest")) {
       if (!r.ok) throw new Error(data.detail);
       st.style.color = "#22c55e";
       st.textContent = "✅ درخواست ارسال شد.";
-      $("requestAdminBtn").innerHTML = '<span>⏳</span> در انتظار تأیید';
+      $("requestAdminBtn").innerHTML = "<span>⏳</span> در انتظار تأیید";
     } catch (e) {
       st.style.color = "#ef4444";
       st.textContent = "❌ " + e.message;
@@ -1382,20 +1619,66 @@ if ($("submitRequest")) {
   };
 }
 
-if ($("clearAgentTimeline")) {
-  $("clearAgentTimeline").onclick = () => {
-    $("agentSteps").innerHTML = '<div class="step">آماده برای شروع</div>';
-  };
+// ═══════════════════════════════════════════════════════════════
+// Command Palette
+// ═══════════════════════════════════════════════════════════════
+const COMMANDS = [
+  { icon: "➕", title: "گفتگوی جدید", desc: "شروع یک مکالمه جدید", shortcut: "Ctrl+N", action: () => $("newChat").click() },
+  { icon: "⚙️", title: "تنظیمات", desc: "باز کردن تنظیمات", action: () => $("openSettings").click() },
+  { icon: "🎁", title: "دعوت دوستان", desc: "کد معرف و توکن‌ها", action: () => $("openReferral").click() },
+  { icon: "🎮", title: "تم گیمینگ", desc: "خرید یا فعال‌سازی", action: () => $("openGaming").click() },
+  { icon: "🔍", title: "جستجو در گفتگوها", desc: "فوکوس روی جستجو", action: () => $("searchInput").focus() },
+  { icon: "📦", title: "بکاپ کل گفتگوها", desc: "دانلود همه", action: () => $("exportAllBtn").click() },
+  { icon: "🚪", title: "خروج", desc: "خروج از حساب", action: () => $("logoutBtn").click() },
+  { icon: "☰", title: "تاگل سایدبار", desc: "نمایش/مخفی", shortcut: "Ctrl+B", action: toggleSidebar },
+  { icon: "🎙️", title: "میکروفون", desc: "شروع ضبط", action: () => $("micBtn").click() },
+];
+
+let paletteSelected = 0;
+
+function renderPalette(query = "") {
+  const list = $("paletteList");
+  if (!list) return;
+  list.innerHTML = "";
+  const q = query.toLowerCase();
+  const filtered = COMMANDS.filter((c) => c.title.toLowerCase().includes(q) || c.desc.toLowerCase().includes(q));
+
+  if (!filtered.length) {
+    list.innerHTML = '<div style="padding:20px;text-align:center;color:var(--fg2);font-size:13px">چیزی پیدا نشد</div>';
+    return;
+  }
+
+  paletteSelected = 0;
+  filtered.forEach((c, i) => {
+    const d = document.createElement("div");
+    d.className = "palette-item" + (i === 0 ? " selected" : "");
+    d.innerHTML = `
+      <span class="palette-item-icon">${c.icon}</span>
+      <div class="palette-item-content">
+        <div class="palette-item-title">${c.title}</div>
+        <div class="palette-item-desc">${c.desc}</div>
+      </div>
+      ${c.shortcut ? `<span class="palette-item-shortcut">${c.shortcut}</span>` : ""}
+    `;
+    d.onclick = () => { c.action(); $("commandPalette").classList.remove("open"); };
+    list.appendChild(d);
+  });
 }
 
-// ═══════════════════════════════════════
+if ($("paletteInput")) {
+  $("paletteInput").addEventListener("input", (e) => renderPalette(e.target.value));
+}
+
+// ═══════════════════════════════════════════════════════════════
 // Keyboard Shortcuts
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 document.addEventListener("keydown", (e) => {
-  // Ctrl+K: Command Palette (پیاده‌سازی بعدی)
+  // Ctrl+K: Command Palette
   if (e.ctrlKey && e.key === "k") {
     e.preventDefault();
-    toast("💡 Command Palette به‌زودی...");
+    $("commandPalette").classList.add("open");
+    renderPalette();
+    setTimeout(() => $("paletteInput").focus(), 100);
   }
   // Ctrl+N: New chat
   if (e.ctrlKey && e.key === "n") {
@@ -1410,20 +1693,24 @@ document.addEventListener("keydown", (e) => {
   // Ctrl+B: Toggle sidebar
   if (e.ctrlKey && e.key === "b") {
     e.preventDefault();
-    if ($("sidebar")) $("sidebar").classList.toggle("hidden");
+    toggleSidebar();
   }
   // Esc: Close modals
   if (e.key === "Escape") {
-    document.querySelectorAll(".modal.open").forEach(m => m.classList.remove("open"));
+    document.querySelectorAll(".modal.open").forEach((m) => m.classList.remove("open"));
+  }
+  // Enter in palette
+  if ($("commandPalette").classList.contains("open") && e.key === "Enter") {
+    const items = document.querySelectorAll(".palette-item");
+    if (items[paletteSelected]) items[paletteSelected].click();
   }
 });
 
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 // Init
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 if (window.mermaid) {
   mermaid.initialize({ startOnLoad: false, theme: "dark" });
 }
 
-// شروع
 checkAuth();
