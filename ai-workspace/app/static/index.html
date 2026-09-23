@@ -2,9 +2,10 @@
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
 <meta name="theme-color" content="#0f1117" />
 <meta name="description" content="دستیار هوش مصنوعی پیشرفته با Agent Loop" />
+<meta name="format-detection" content="telephone=no" />
 <title>🧠 AI Workspace</title>
 
 <!-- External Libraries -->
@@ -36,18 +37,23 @@
 
     <div class="auth-form">
       <div class="auth-field">
-        <span class="auth-icon">👤</span>
         <input type="text" id="authUsername" placeholder="نام کاربری" autocomplete="username" />
+        <span class="auth-icon">👤</span>
       </div>
 
       <div class="auth-field" id="authEmailField" style="display:none">
-        <span class="auth-icon">📧</span>
         <input type="email" id="authEmail" placeholder="ایمیل" autocomplete="email" />
+        <span class="auth-icon">📧</span>
+      </div>
+
+      <div class="auth-field" id="authReferralField" style="display:none">
+        <input type="text" id="authReferral" placeholder="کد معرف (اختیاری)" autocomplete="off" />
+        <span class="auth-icon">🎁</span>
       </div>
 
       <div class="auth-field">
-        <span class="auth-icon">🔒</span>
         <input type="password" id="authPassword" placeholder="رمز عبور" autocomplete="current-password" />
+        <span class="auth-icon">🔒</span>
         <button type="button" class="auth-toggle-pass" id="togglePass">👁️</button>
       </div>
     </div>
@@ -70,7 +76,7 @@
 <!-- ═══════════════════════════════════════════════════════════
      اپلیکیشن اصلی
      ═══════════════════════════════════════════════════════════ -->
-<div class="app" id="mainApp" style="display:none">
+<div class="app hidden" id="mainApp">
 
   <!-- ═══════════ Sidebar ═══════════ -->
   <aside class="sidebar" id="sidebar">
@@ -122,22 +128,44 @@
     <!-- Sidebar Bottom -->
     <div class="sidebar-bottom">
 
+      <!-- توکن -->
+      <div class="tokens-badge" id="tokensBadge">
+        <span>🪙</span>
+        <span id="tokensCount">0</span>
+        <span>توکن</span>
+      </div>
+
+      <!-- دعوت دوستان -->
+      <button id="openReferral" class="btn-ghost" style="border-color:#fbbf24;color:#fbbf24">
+        <span>🎁</span> دعوت دوستان
+      </button>
+
+      <!-- تم گیمینگ -->
+      <button id="openGaming" class="btn-ghost" style="border-color:#8b5cf6;color:#8b5cf6">
+        <span>🎮</span> تم گیمینگ
+      </button>
+
+      <!-- درخواست ادمین -->
       <button id="requestAdminBtn" class="btn-ghost" style="display:none">
         <span>👑</span> درخواست ادمین شدن
       </button>
 
+      <!-- تنظیمات ادمین -->
       <button id="openAdminSettings" class="btn-ghost btn-admin-special" style="display:none">
         <span>🔑</span> تنظیمات API (ادمین)
       </button>
 
+      <!-- پنل ادمین -->
       <a href="/admin" id="adminLink" class="btn-ghost" style="display:none">
         <span>🛡️</span> پنل ادمین
       </a>
 
+      <!-- بکاپ -->
       <button id="exportAllBtn" class="btn-ghost">
         <span>📦</span> بکاپ کل گفتگوها
       </button>
 
+      <!-- خروج -->
       <button id="logoutBtn" class="btn-ghost btn-danger-ghost">
         <span>🚪</span> خروج از حساب
       </button>
@@ -202,7 +230,9 @@
       <div class="welcome-screen" id="welcomeScreen">
         <div class="welcome-icon">🧠</div>
         <h2 class="welcome-title">به AI Workspace خوش آمدی!</h2>
-        <p class="welcome-subtitle">دستیار هوشمند با قابلیت Agent Loop، حافظه‌ی بلندمدت و پشتیبانی از چند Provider</p>
+        <p class="welcome-subtitle">
+          دستیار هوشمند با قابلیت Agent Loop، حافظه‌ی بلندمدت و پشتیبانی از چند Provider
+        </p>
 
         <div class="welcome-features">
           <div class="welcome-card" data-prompt="یک کد Python برای مرتب‌سازی سریع بنویس">
@@ -238,12 +268,6 @@
 
       <!-- Attached Files -->
       <div class="attached" id="attached"></div>
-
-      <!-- Model Bar -->
-      <div class="composer-info" id="composerInfo" style="display:none">
-        <span class="composer-info-item" id="modelInfo">🤖 gpt-4o-mini</span>
-        <span class="composer-info-item" id="tokensInfo">📊 ~0 توکن</span>
-      </div>
 
       <!-- Input Row -->
       <div class="composer-row">
@@ -363,12 +387,6 @@
         <label>زیر و بمی صدا: <span id="voicePitchVal">1.0</span></label>
         <input type="range" id="setVoicePitch" min="0.5" max="2" step="0.1" />
       </div>
-      <div class="field">
-        <label>صدای موردنظر</label>
-        <select id="setVoiceName">
-          <option value="">پیش‌فرض</option>
-        </select>
-      </div>
       <button class="btn-ghost" id="testVoice" style="margin-top:8px">🔊 تست صدا</button>
     </div>
 
@@ -412,13 +430,13 @@
       </div>
       <div class="about-section">
         <h5>نسخه</h5>
-        <p>v1.0.0 — Phase 1</p>
+        <p>v3.0.0 — Phase 1 + Referral + Gaming</p>
       </div>
       <div class="about-section">
         <h5>قابلیت‌های فعال</h5>
         <ul class="about-list">
           <li>✅ چت با AI + Streaming</li>
-          <li>✅ ۱۰ تم قابل انتخاب</li>
+          <li>✅ ۱۱ تم (شامل گیمینگ RGB)</li>
           <li>✅ میکروفون + پاسخ صوتی</li>
           <li>✅ آپلود فایل</li>
           <li>✅ سنجاق، آرشیو، علاقه‌مندی</li>
@@ -429,6 +447,8 @@
           <li>✅ بوکمارک پیام‌ها</li>
           <li>✅ حافظه بلندمدت</li>
           <li>✅ LaTeX + Mermaid</li>
+          <li>🎁 سیستم دعوت + توکن</li>
+          <li>🎮 تم گیمینگ RGB</li>
         </ul>
       </div>
       <div class="about-section">
@@ -466,6 +486,7 @@
       <button class="tab" data-atab="system"><span>⚙️</span> سیستم</button>
       <button class="tab" data-atab="limits"><span>📊</span> محدودیت‌ها</button>
       <button class="tab" data-atab="defaults"><span>👥</span> پیش‌فرض کاربر</button>
+      <button class="tab" data-atab="referral"><span>🎁</span> دعوت</button>
     </div>
 
     <!-- AI -->
@@ -611,6 +632,28 @@
       </div>
     </div>
 
+    <!-- دعوت -->
+    <div class="tab-content" data-atab="referral">
+      <p class="hint">تنظیمات سیستم دعوت دوستان و تم گیمینگ</p>
+      <div class="field checkbox-field">
+        <input type="checkbox" id="admReferralEnabled" />
+        <label for="admReferralEnabled">فعال‌سازی سیستم دعوت</label>
+      </div>
+      <div class="field">
+        <label>تعداد توکن به ازای هر دعوت</label>
+        <input type="number" id="admReferralTokens" min="0" max="1000" />
+      </div>
+      <div class="divider"></div>
+      <div class="field">
+        <label>قیمت تم گیمینگ (تومان)</label>
+        <input type="number" id="admGamingPrice" min="0" />
+      </div>
+      <div class="field">
+        <label>قیمت تم گیمینگ (توکن)</label>
+        <input type="number" id="admGamingTokenPrice" min="0" />
+      </div>
+    </div>
+
     <div class="modal-actions">
       <button class="btn-ghost" id="closeAdminSettingsBtn">بستن</button>
       <button class="send-btn" id="saveAdminSettings">💾 ذخیره</button>
@@ -672,7 +715,9 @@
       <h3>🧠 حافظه بلندمدت</h3>
       <button class="modal-close" id="closeMemory">✕</button>
     </div>
-    <p class="hint">اطلاعاتی که AI درباره‌ی تو یاد می‌گیره و توی همه‌ی گفتگوها استفاده می‌کنه.</p>
+    <p class="hint">
+      اطلاعاتی که AI درباره‌ی تو یاد می‌گیره و توی همه‌ی گفتگوها استفاده می‌کنه.
+    </p>
 
     <div class="memory-add">
       <input type="text" id="memKey" placeholder="کلید (مثلاً: نام من)" />
@@ -689,7 +734,87 @@
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════
-     Command Palette
+     مودال: دعوت دوستان 🎁
+     ═══════════════════════════════════════════════════════════ -->
+<div class="modal" id="referralModal">
+  <div class="modal-box" style="max-width:520px">
+    <div class="modal-header">
+      <h3>🎁 دعوت دوستان</h3>
+      <button class="modal-close" id="closeReferral">✕</button>
+    </div>
+
+    <div class="referral-card">
+      <div style="font-size:13px;color:var(--fg2);margin-bottom:8px">
+        کد معرف خودت رو برای دوستات بفرست. به ازای هر دعوت موفق:
+      </div>
+      <div style="font-size:20px;font-weight:bold;color:#fbbf24;text-align:center">
+        🪙 <span id="tokensPerRef">10</span> توکن
+      </div>
+
+      <div class="referral-code-box">
+        <input type="text" id="myRefCode" readonly />
+        <button class="send-btn" id="copyRefCode" style="padding:0 16px;height:46px">📋</button>
+      </div>
+
+      <div class="referral-stats">
+        <div class="referral-stat">
+          <div class="num" id="refCount">0</div>
+          <div class="lbl">تعداد دعوت‌ها</div>
+        </div>
+        <div class="referral-stat">
+          <div class="num" id="refTokens">0</div>
+          <div class="lbl">توکن کسب‌شده</div>
+        </div>
+      </div>
+    </div>
+
+    <h4 style="font-size:13px;margin-top:16px;margin-bottom:8px;color:var(--fg2)">
+      لیست دعوت‌شده‌ها:
+    </h4>
+    <div id="refList" style="max-height:200px;overflow-y:auto"></div>
+
+    <div class="modal-actions">
+      <button class="btn-ghost" id="closeReferralBtn">بستن</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     مودال: تم گیمینگ 🎮
+     ═══════════════════════════════════════════════════════════ -->
+<div class="modal" id="gamingModal">
+  <div class="modal-box" style="max-width:520px">
+    <div class="modal-header">
+      <h3>🎮 تم گیمینگ RGB</h3>
+      <button class="modal-close" id="closeGaming">✕</button>
+    </div>
+
+    <div class="theme-swatch gaming-swatch" style="width:100%;aspect-ratio:auto;height:120px;margin-bottom:16px;border-radius:14px"></div>
+
+    <div style="font-size:13px;color:var(--fg2);line-height:1.8;margin-bottom:16px">
+      🎮 <b>تم گیمینگ</b> — همه‌ی دکمه‌ها با نور RGB رنگین‌کمانی می‌درخشن، مثل ماوس گیمینگ!<br>
+      ✨ افکت‌های نئون روی پیام‌ها، سایدبار، و همه‌ی اجزا
+    </div>
+
+    <div id="gamingStatus" style="font-size:13px;padding:12px;background:var(--bg3);border-radius:10px;margin-bottom:14px"></div>
+
+    <div id="gamingActions" style="display:flex;flex-direction:column;gap:10px">
+      <button class="send-btn" id="unlockWithTokens" style="width:100%;height:48px">
+        🪙 فعال‌سازی با توکن
+      </button>
+      <button class="btn-ghost" id="unlockWithPayment" style="height:48px;border-color:#fbbf24;color:#fbbf24">
+        💰 درخواست پرداخت
+      </button>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-ghost" id="closeGamingBtn">بستن</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     مودال: Command Palette
      ═══════════════════════════════════════════════════════════ -->
 <div class="modal" id="commandPalette">
   <div class="modal-box palette-box">
@@ -706,6 +831,9 @@
 
 <!-- Toast Container -->
 <div class="toast-container" id="toastContainer"></div>
+
+<!-- Sidebar Overlay (موبایل) -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 <script src="/static/app.js"></script>
 </body>
