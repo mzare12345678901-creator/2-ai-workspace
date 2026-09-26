@@ -14,7 +14,7 @@ python run.py
 ```bash
 python start_public.py
 ```
-→ یه لینک `https://xxx.ngrok-free.app` می‌ده که از هر جا باز می‌شه.
+→ یه لینک `[https://xxx.ngrok-free.app](https://ai-workspace-rnc9.onrender.com/)` می‌ده که از هر جا باز می‌شه.
 
 ## امکانات
 - 🔐 لاگین و ثبت‌نام
