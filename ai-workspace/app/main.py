@@ -1,35 +1,14 @@
 # app/main.py
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
-
-from app.database import Base, engine, fix_missing_columns
-from app import models  # noqa: F401 - مهم: قبل از create_all باید import شود
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # ۱. ساخت جداول جدید (اگر وجود نداشته باشند)
-    Base.metadata.create_all(bind=engine)
-
-    # ۲. اضافه کردن ستون‌های گمشده به جداول موجود
-    fix_missing_columns()
-
-    yield
-
-    # cleanup اگر لازم داشتی اینجا بنویس
-
-
-app = FastAPI(lifespan=lifespan)
+from pathlib import Path
+import secrets
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from pathlib import Path
 
-from app.database import Base, engine, SessionLocal
-from app import models
-Base.metadata.create_all(bind=engine)
-
+from app.database import Base, engine, SessionLocal, fix_missing_columns
+from app import models  # noqa: F401 - مهم: قبل از create_all باید import شود
 from app.models import User
 from app.auth import hash_password
 from app.config import settings
@@ -50,12 +29,10 @@ def create_default_admin():
             existing.hashed_password = hash_password(settings.ADMIN_PASSWORD)
             existing.gaming_theme_unlocked = True
             if not existing.referral_code:
-                import secrets
                 existing.referral_code = "admin" + secrets.token_hex(3)
             db.commit()
             print(f"✅ ادمین '{settings.ADMIN_USERNAME}' به‌روز شد.")
         else:
-            import secrets
             db.add(User(
                 username=settings.ADMIN_USERNAME,
                 email=settings.ADMIN_EMAIL,
@@ -74,9 +51,24 @@ def create_default_admin():
         db.close()
 
 
-create_default_admin()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # ۱. ساخت جداول جدید (اگر وجود نداشته باشند)
+    Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="AI Workspace")
+    # ۲. اضافه کردن ستون‌های گمشده به جداول موجود
+    fix_missing_columns()
+
+    # ۳. ساخت/به‌روزرسانی ادمین پیش‌فرض
+    create_default_admin()
+
+    yield
+
+    # cleanup اگر لازم داشتی اینجا بنویس
+
+
+app = FastAPI(title="AI Workspace", lifespan=lifespan)
+
 STATIC_DIR = Path(__file__).parent / "static"
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
