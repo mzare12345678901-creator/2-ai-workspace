@@ -1,3 +1,26 @@
+# app/main.py
+from contextlib import asynccontextmanager
+from fastapi import FastAPI
+
+from app.database import Base, engine, fix_missing_columns
+from app import models  # noqa: F401 - مهم: قبل از create_all باید import شود
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # ۱. ساخت جداول جدید (اگر وجود نداشته باشند)
+    Base.metadata.create_all(bind=engine)
+
+    # ۲. اضافه کردن ستون‌های گمشده به جداول موجود
+    fix_missing_columns()
+
+    yield
+
+    # cleanup اگر لازم داشتی اینجا بنویس
+
+
+app = FastAPI(lifespan=lifespan)
+
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
