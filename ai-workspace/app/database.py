@@ -1,4 +1,3 @@
-```python
 from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import sessionmaker, declarative_base
 from app.config import settings
@@ -147,4 +146,3 @@ def get_db():
 
     finally:
         db.close()
-```
