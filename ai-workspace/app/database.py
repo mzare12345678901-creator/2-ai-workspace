@@ -3,11 +3,6 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 from app.config import settings
 import threading
 
-
-# ============================================================
-# DATABASE
-# ============================================================
-
 engine = create_engine(
     settings.DB_URL,
     connect_args={"check_same_thread": False}
@@ -21,20 +16,11 @@ SessionLocal = sessionmaker(
 
 Base = declarative_base()
 
-
-# ============================================================
-# DATABASE MIGRATION
-# ============================================================
-
 _schema_lock = threading.Lock()
 _schema_ready = False
 
 
-def initialize_database():
-    """
-    ساخت جدول‌های جدید و اضافه‌کردن ستون‌های جدید به دیتابیس
-    قدیمی، بدون حذف اطلاعات قبلی.
-    """
+def fix_missing_columns():
     global _schema_ready
 
     if _schema_ready:
@@ -44,19 +30,13 @@ def initialize_database():
         if _schema_ready:
             return
 
-        # جلوگیری از circular import
         from app import models  # noqa: F401
 
-        # ساخت جدول‌هایی که هنوز وجود ندارند
         Base.metadata.create_all(bind=engine)
 
         with engine.begin() as conn:
             inspector = inspect(conn)
             tables = inspector.get_table_names()
-
-            # ==================================================
-            # USERS
-            # ==================================================
 
             if "users" in tables:
 
@@ -85,7 +65,6 @@ def initialize_database():
                             )
                         )
 
-                # ایندکس referral_code
                 conn.execute(
                     text(
                         """
@@ -95,10 +74,6 @@ def initialize_database():
                         """
                     )
                 )
-
-            # ==================================================
-            # APP SETTINGS
-            # ==================================================
 
             if "app_settings" in tables:
 
@@ -130,13 +105,12 @@ def initialize_database():
         _schema_ready = True
 
 
-# ============================================================
-# FASTAPI DATABASE DEPENDENCY
-# ============================================================
+def initialize_database():
+    fix_missing_columns()
+
 
 def get_db():
 
-    # اجرای migration قبل از استفاده از دیتابیس
     initialize_database()
 
     db = SessionLocal()
