@@ -50,18 +50,12 @@ body{
     overflow-x:hidden;
 }
 
-/* =========================
-   LAYOUT
-========================= */
 
 .app{
     display:flex;
     min-height:100vh;
 }
 
-/* =========================
-   SIDEBAR
-========================= */
 
 .sidebar{
     width:255px;
@@ -222,9 +216,6 @@ body{
     background:rgba(255,255,255,.08);
 }
 
-/* =========================
-   MAIN
-========================= */
 
 .main{
     margin-right:255px;
@@ -294,10 +285,6 @@ body{
     max-width:1600px;
     margin:auto;
 }
-
-/* =========================
-   STATS
-========================= */
 
 .stats{
     display:grid;
@@ -376,9 +363,6 @@ body{
     margin-top:4px;
 }
 
-/* =========================
-   GRID
-========================= */
 
 .dashboard-grid{
     display:grid;
@@ -419,10 +403,6 @@ body{
     padding:18px;
 }
 
-/* =========================
-   CHART
-========================= */
-
 .chart{
     height:260px;
     position:relative;
@@ -459,10 +439,6 @@ body{
     color:#9aa3b4;
     font-size:9px;
 }
-
-/* =========================
-   MINI BARS
-========================= */
 
 .bars{
     height:250px;
@@ -503,10 +479,6 @@ body{
     font-size:9px;
     color:#929bab;
 }
-
-/* =========================
-   SYSTEM STATUS
-========================= */
 
 .status-list{
     display:flex;
@@ -559,9 +531,6 @@ body{
     box-shadow:0 0 0 4px rgba(54,189,120,.1);
 }
 
-/* =========================
-   QUICK ACTIONS
-========================= */
 
 .quick-grid{
     display:grid;
@@ -603,9 +572,6 @@ body{
     margin-top:4px;
 }
 
-/* =========================
-   USERS
-========================= */
 
 .users-card{
     margin-top:18px;
@@ -757,10 +723,6 @@ tbody tr:hover{
     border-color:#ffcaca;
 }
 
-/* =========================
-   PAGINATION
-========================= */
-
 .table-footer{
     padding:13px 18px;
     display:flex;
@@ -791,9 +753,6 @@ tbody tr:hover{
     border-color:var(--blue);
 }
 
-/* =========================
-   MODAL
-========================= */
 
 .modal{
     position:fixed;
@@ -899,10 +858,6 @@ tbody tr:hover{
     margin-bottom:13px;
 }
 
-/* =========================
-   TOAST
-========================= */
-
 .toast{
     position:fixed;
     bottom:25px;
@@ -924,9 +879,6 @@ tbody tr:hover{
     opacity:1;
 }
 
-/* =========================
-   MOBILE
-========================= */
 
 .mobile-menu{
     display:none;
@@ -1037,9 +989,6 @@ tbody tr:hover{
 
 <div class="app">
 
-<!-- =========================
-     SIDEBAR
-========================= -->
 
 <aside class="sidebar" id="sidebar">
 
@@ -1072,51 +1021,42 @@ tbody tr:hover{
         <div class="nav-title">مدیریت</div>
 
         <button class="nav-item active" onclick="scrollToSection('dashboard')">
-            <span class="nav-icon">📊</span>
             <span>داشبورد</span>
         </button>
 
         <button class="nav-item" onclick="scrollToSection('users')">
-            <span class="nav-icon">👥</span>
             <span>مدیریت کاربران</span>
         </button>
 
         <button class="nav-item" onclick="scrollToSection('conversations')">
-            <span class="nav-icon">💬</span>
             <span>گفتگوها</span>
         </button>
 
         <button class="nav-item" onclick="showSystemInfo()">
-            <span class="nav-icon">⚙️</span>
             <span>وضعیت سیستم</span>
         </button>
 
         <div class="nav-title">ZYVO</div>
 
         <button class="nav-item" onclick="openAgentTimeline()">
-            <span class="nav-icon">🤖</span>
             <span>Agent Timeline</span>
         </button>
 
         <button class="nav-item" onclick="showMissionInfo()">
-            <span class="nav-icon">🚀</span>
             <span>Mission Control</span>
         </button>
 
         <button class="nav-item" onclick="showMemoryInfo()">
-            <span class="nav-icon">🧠</span>
             <span>Memory Engine</span>
         </button>
 
         <button class="nav-item" onclick="showToolsInfo()">
-            <span class="nav-icon">🛠️</span>
             <span>Tool System</span>
         </button>
 
         <div class="nav-title">حساب</div>
 
         <button class="nav-item" onclick="logout()">
-            <span class="nav-icon">🚪</span>
             <span>خروج</span>
         </button>
 
@@ -1124,16 +1064,12 @@ tbody tr:hover{
 
     <div class="sidebar-bottom">
         <button class="back-btn" onclick="location.href='/'">
-            ← بازگشت به ZYVO
+            ← بازگشت به Ai Workspace
         </button>
     </div>
 
 </aside>
 
-
-<!-- =========================
-     MAIN
-========================= -->
 
 <main class="main">
 
@@ -1147,7 +1083,7 @@ tbody tr:hover{
 
             <div class="page-title">
                 <h1>داشبورد مدیریت</h1>
-                <p>مرکز مدیریت و نظارت بر ZYVO AI Workspace</p>
+                <p>مرکز مدیریت و نظارت بر AI Workspace</p>
             </div>
 
         </div>
@@ -1155,11 +1091,11 @@ tbody tr:hover{
         <div class="top-actions">
 
             <button class="icon-btn" onclick="toggleFullscreen()" title="تمام صفحه">
-                ⛶
+                تمام صفحه
             </button>
 
             <button class="refresh-btn" onclick="refreshAll()">
-                ↻ بروزرسانی
+                 بروزرسانی
             </button>
 
         </div>
@@ -1169,16 +1105,12 @@ tbody tr:hover{
 
     <div class="content" id="dashboard">
 
-        <!-- =====================
-             STATS
-        ====================== -->
 
         <section class="stats" id="stats">
 
             <div class="stat blue">
                 <div class="stat-top">
                     <span>کاربران</span>
-                    <div class="stat-icon">👥</div>
                 </div>
 
                 <div class="stat-number" id="totalUsers">0</div>
@@ -1190,7 +1122,6 @@ tbody tr:hover{
 
                 <div class="stat-top">
                     <span>فعال</span>
-                    <div class="stat-icon">🟢</div>
                 </div>
 
                 <div class="stat-number" id="activeUsers">0</div>
@@ -1203,7 +1134,6 @@ tbody tr:hover{
 
                 <div class="stat-top">
                     <span>گفتگو</span>
-                    <div class="stat-icon">💬</div>
                 </div>
 
                 <div class="stat-number" id="totalConversations">0</div>
@@ -1216,7 +1146,6 @@ tbody tr:hover{
 
                 <div class="stat-top">
                     <span>پیام</span>
-                    <div class="stat-icon">✉️</div>
                 </div>
 
                 <div class="stat-number" id="totalMessages">0</div>
@@ -1229,7 +1158,6 @@ tbody tr:hover{
 
                 <div class="stat-top">
                     <span>فایل</span>
-                    <div class="stat-icon">📁</div>
                 </div>
 
                 <div class="stat-number" id="totalFiles">0</div>
@@ -1240,9 +1168,6 @@ tbody tr:hover{
         </section>
 
 
-        <!-- =====================
-             CHARTS
-        ====================== -->
 
         <section class="dashboard-grid">
 
@@ -1256,8 +1181,6 @@ tbody tr:hover{
                             نمای آماری کاربران، گفتگوها و پیام‌ها
                         </div>
                     </div>
-
-                    <span style="font-size:20px">📈</span>
 
                 </div>
 
@@ -1373,8 +1296,6 @@ tbody tr:hover{
                         </div>
                     </div>
 
-                    <span>🟢</span>
-
                 </div>
 
                 <div class="card-body">
@@ -1384,8 +1305,6 @@ tbody tr:hover{
                         <div class="status-row">
 
                             <div class="status-left">
-
-                                <div class="status-icon">⚡</div>
 
                                 <div>
                                     <div class="status-name">
@@ -1431,8 +1350,6 @@ tbody tr:hover{
 
                             <div class="status-left">
 
-                                <div class="status-icon">🤖</div>
-
                                 <div>
                                     <div class="status-name">
                                         Agent Engine
@@ -1453,8 +1370,6 @@ tbody tr:hover{
                         <div class="status-row">
 
                             <div class="status-left">
-
-                                <div class="status-icon">🧠</div>
 
                                 <div>
                                     <div class="status-name">
@@ -1481,10 +1396,6 @@ tbody tr:hover{
         </section>
 
 
-        <!-- =====================
-             QUICK ACTIONS
-        ====================== -->
-
         <section class="card" style="margin-bottom:18px">
 
             <div class="card-header">
@@ -1492,7 +1403,7 @@ tbody tr:hover{
                 <div>
                     <div class="card-title">دسترسی سریع</div>
                     <div class="card-subtitle">
-                        ابزارهای مدیریتی و ZYVO
+                        ابزارهای مدیریتی و Ai Workspace
                     </div>
                 </div>
 
@@ -1503,25 +1414,21 @@ tbody tr:hover{
                 <div class="quick-grid">
 
                     <button class="quick" onclick="scrollToSection('users')">
-                        <div class="quick-icon">👥</div>
                         <strong>مدیریت کاربران</strong>
                         <span>مشاهده و کنترل کاربران</span>
                     </button>
 
                     <button class="quick" onclick="showMissionInfo()">
-                        <div class="quick-icon">🚀</div>
                         <strong>Mission Control</strong>
                         <span>کنترل چرخه اجرای Agent</span>
                     </button>
 
                     <button class="quick" onclick="openAgentTimeline()">
-                        <div class="quick-icon">🤖</div>
                         <strong>Agent Timeline</strong>
                         <span>مشاهده رویدادهای Agent</span>
                     </button>
 
                     <button class="quick" onclick="showToolsInfo()">
-                        <div class="quick-icon">🛠️</div>
                         <strong>Tool System</strong>
                         <span>ابزارها و دسترسی‌ها</span>
                     </button>
@@ -1532,10 +1439,6 @@ tbody tr:hover{
 
         </section>
 
-
-        <!-- =====================
-             USERS
-        ====================== -->
 
         <section class="card users-card" id="users">
 
@@ -1548,7 +1451,7 @@ tbody tr:hover{
                     </div>
 
                     <div class="card-subtitle">
-                        مشاهده و مدیریت کاربران ثبت‌شده در ZYVO
+                        مشاهده و مدیریت کاربران ثبت‌شده در Ai Worspace
                     </div>
 
                 </div>
@@ -1588,7 +1491,6 @@ tbody tr:hover{
 
                         <tr>
 
-                            <th>#</th>
                             <th>کاربر</th>
                             <th>نقش</th>
                             <th>وضعیت</th>
@@ -1641,7 +1543,7 @@ tbody tr:hover{
             padding:22px 0 5px;
         ">
 
-            ZYVO AI Workspace
+            AI Workspace
             •
             THINK • BUILD • EXECUTE
 
@@ -1654,9 +1556,6 @@ tbody tr:hover{
 </div>
 
 
-<!-- =========================
-     MODAL
-========================= -->
 
 <div class="modal" id="userModal">
 
@@ -1669,7 +1568,7 @@ tbody tr:hover{
             </h3>
 
             <button class="close" onclick="closeModal()">
-                ✕
+                
             </button>
 
         </div>
@@ -1681,18 +1580,12 @@ tbody tr:hover{
 </div>
 
 
-<!-- =========================
-     TOAST
-========================= -->
 
 <div class="toast" id="toast"></div>
 
 
 <script>
 
-/* =========================================================
-   ZYVO ADMIN PANEL
-========================================================= */
 
 const $ = id => document.getElementById(id);
 
@@ -1701,10 +1594,6 @@ const TOKEN = localStorage.getItem("token");
 let allUsers = [];
 let currentUsername = null;
 
-
-/* =========================================================
-   AUTH FETCH
-========================================================= */
 
 const originalFetch = window.fetch;
 
@@ -1739,9 +1628,6 @@ window.fetch = function(url, options = {}) {
 };
 
 
-/* =========================================================
-   TOAST
-========================================================= */
 
 function toast(message){
 
@@ -1759,9 +1645,6 @@ function toast(message){
 }
 
 
-/* =========================================================
-   STATS
-========================================================= */
 
 async function loadStats(){
 
@@ -1807,9 +1690,6 @@ async function loadStats(){
 }
 
 
-/* =========================================================
-   NUMBER FORMAT
-========================================================= */
 
 function formatNumber(number){
 
@@ -1819,9 +1699,6 @@ function formatNumber(number){
 }
 
 
-/* =========================================================
-   USERS
-========================================================= */
 
 async function loadUsers(){
 
@@ -1850,11 +1727,6 @@ async function loadUsers(){
     }
 
 }
-
-
-/* =========================================================
-   RENDER USERS
-========================================================= */
 
 function renderUsers(users){
 
@@ -1936,13 +1808,13 @@ function renderUsers(users){
 
                     ? `
                         <span class="badge admin">
-                            👑 ادمین
+                            ادمین
                         </span>
                     `
 
                     : `
                         <span class="badge user">
-                            👤 کاربر
+                            کاربر
                         </span>
                     `
                 }
@@ -1957,13 +1829,13 @@ function renderUsers(users){
 
                     ? `
                         <span class="badge active">
-                            ● فعال
+                            فعال
                         </span>
                     `
 
                     : `
                         <span class="badge inactive">
-                            ● غیرفعال
+                            غیرفعال
                         </span>
                     `
                 }
@@ -2003,7 +1875,7 @@ function renderUsers(users){
                             '${escapeAttribute(u.username)}'
                         )">
 
-                        💬
+                
 
                     </button>
 
@@ -2041,7 +1913,7 @@ function renderUsers(users){
                         title="حذف کاربر"
                         onclick="deleteUser(${u.id})">
 
-                        🗑️
+                        
 
                     </button>
 
@@ -2201,7 +2073,7 @@ async function viewConversations(
             item.innerHTML = `
 
                 <strong>
-                    💬
+                    
                     ${escapeHtml(
                         cv.title || "گفتگوی بدون عنوان"
                     )}
@@ -2230,9 +2102,6 @@ async function viewConversations(
 }
 
 
-/* =========================================================
-   MESSAGES
-========================================================= */
 
 async function viewMessages(cid){
 
@@ -2292,8 +2161,8 @@ async function viewMessages(cid){
                 <strong>
                     ${
                         m.role === "user"
-                        ? "👤 کاربر"
-                        : "🤖 ZYVO"
+                        ? "کاربر"
+                        : "Ai Workspace"
                     }
                 </strong>
 
@@ -2387,9 +2256,6 @@ async function toggleActive(uid){
 }
 
 
-/* =========================================================
-   TOGGLE ADMIN
-========================================================= */
 
 async function toggleAdmin(uid){
 
@@ -2506,9 +2372,6 @@ async function deleteUser(uid){
 }
 
 
-/* =========================================================
-   CHART
-========================================================= */
 
 function drawChart(stats){
 
@@ -2603,9 +2466,6 @@ function drawLine(
 }
 
 
-/* =========================================================
-   SYSTEM INFO
-========================================================= */
 
 function showSystemInfo(){
 
@@ -2633,7 +2493,7 @@ function showSystemInfo(){
 
             <div class="status-row">
                 <div class="status-left">
-                    <div class="status-icon">🗄️</div>
+                    <div class="status-icon"></div>
                     <div>
                         <div class="status-name">
                             Database
@@ -2648,7 +2508,7 @@ function showSystemInfo(){
 
             <div class="status-row">
                 <div class="status-left">
-                    <div class="status-icon">🤖</div>
+                    <div class="status-icon"></div>
                     <div>
                         <div class="status-name">
                             AI Gateway
@@ -2679,7 +2539,7 @@ function showSystemInfo(){
 function showMissionInfo(){
 
     $("modalTitle").textContent =
-        "🚀 ZYVO Mission Control";
+        "Ai workspace Mission Control";
 
     $("modalContent").innerHTML = `
 
@@ -2688,15 +2548,15 @@ function showMissionInfo(){
             gap:9px;
         ">
 
-            ${missionStep("🧠","تحلیل درخواست","Analyze Request")}
-            ${missionStep("📋","ساخت برنامه","Planner")}
-            ${missionStep("🔎","بررسی منابع","Inspect")}
-            ${missionStep("🛠️","انتخاب ابزار","Tool Router")}
-            ${missionStep("⚙️","اجرای عملیات","Execute")}
-            ${missionStep("👁️","بررسی نتیجه","Observe")}
-            ${missionStep("🧪","تست","Verify")}
-            ${missionStep("🔧","اصلاح","Auto Fix")}
-            ${missionStep("✅","تکمیل","Final Answer")}
+            ${missionStep("تحلیل درخواست","Analyze Request")}
+            ${missionStep("ساخت برنامه","Planner")}
+            ${missionStep("بررسی منابع","Inspect")}
+            ${missionStep("انتخاب ابزار","Tool Router")}
+            ${missionStep("اجرای عملیات","Execute")}
+            ${missionStep("بررسی نتیجه","Observe")}
+            ${missionStep("تست","Verify")}
+            ${missionStep("اصلاح","Auto Fix")}
+            ${missionStep("تکمیل","Final Answer")}
 
         </div>
 
@@ -2757,14 +2617,10 @@ function missionStep(icon,title,desc){
 }
 
 
-/* =========================================================
-   OTHER ZYVO SYSTEMS
-========================================================= */
-
 function showMemoryInfo(){
 
     showInfoModal(
-        "🧠 Memory Engine",
+        " Memory Engine",
         "سیستم حافظه بلندمدت و مدیریت Context در ZYVO."
     );
 
@@ -2774,7 +2630,7 @@ function showMemoryInfo(){
 function showToolsInfo(){
 
     showInfoModal(
-        "🛠️ Tool System",
+        " Tool System",
         "مرکز ابزارهای ZYVO برای Web، Files، Terminal، Git و Agentها."
     );
 
@@ -2784,7 +2640,7 @@ function showToolsInfo(){
 function openAgentTimeline(){
 
     showInfoModal(
-        "🤖 Agent Timeline",
+        "Agent Timeline",
         "نمایش مراحل اجرای Agent و رویدادهای Mission."
     );
 
@@ -2807,7 +2663,7 @@ function showInfoModal(title,text){
                 font-size:42px;
                 margin-bottom:15px;
             ">
-                🤖
+                
             </div>
 
             <h3 style="margin:0 0 10px">
@@ -2833,9 +2689,6 @@ function showInfoModal(title,text){
 }
 
 
-/* =========================================================
-   MODAL
-========================================================= */
 
 function closeModal(){
 
@@ -2864,10 +2717,6 @@ $("userModal")
     );
 
 
-/* =========================================================
-   REFRESH
-========================================================= */
-
 async function refreshAll(){
 
     await Promise.all([
@@ -2879,10 +2728,6 @@ async function refreshAll(){
 
 }
 
-
-/* =========================================================
-   NAVIGATION
-========================================================= */
 
 function scrollToSection(id){
 
@@ -2929,10 +2774,6 @@ function closeSidebar(){
 }
 
 
-/* =========================================================
-   FULLSCREEN
-========================================================= */
-
 function toggleFullscreen(){
 
     if(!document.fullscreenElement){
@@ -2952,10 +2793,6 @@ function toggleFullscreen(){
 }
 
 
-/* =========================================================
-   LOGOUT
-========================================================= */
-
 function logout(){
 
     localStorage.removeItem("token");
@@ -2964,10 +2801,6 @@ function logout(){
 
 }
 
-
-/* =========================================================
-   HELPERS
-========================================================= */
 
 function formatDate(value){
 
@@ -3021,10 +2854,6 @@ function escapeAttribute(value){
 }
 
 
-/* =========================================================
-   KEYBOARD
-========================================================= */
-
 document.addEventListener(
     "keydown",
     event => {
@@ -3039,10 +2868,6 @@ document.addEventListener(
     }
 );
 
-
-/* =========================================================
-   INIT
-========================================================= */
 
 if(!TOKEN){
 
