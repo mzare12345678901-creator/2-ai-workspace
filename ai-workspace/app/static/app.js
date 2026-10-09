@@ -360,10 +360,18 @@ if ($("authSubmit")) {
           body: JSON.stringify({ username, email, password, referral_code: referral || null }),
         });
       } else {
-        const fd = new FormData();
-        fd.append("username", username);
-        fd.append("password", password);
-        r = await fetch("/api/auth/login", { method: "POST", body: fd });
+        const body = new URLSearchParams();
+        body.set("username", username);
+        body.set("password", password);
+
+        r = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+          },
+          body: body.toString()
+        });
+      }
       }
       const data = await r.json();
       if (!r.ok) throw new Error(data.detail || "خطا");
