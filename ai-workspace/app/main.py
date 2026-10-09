@@ -20,33 +20,65 @@ from app.routers import (
 
 def create_default_admin():
     db = SessionLocal()
+
     try:
-        existing = db.query(User).filter(User.username == settings.ADMIN_USERNAME).first()
-        if existing:
-            existing.is_admin = True
-            existing.is_active = True
-            existing.email = settings.ADMIN_EMAIL
-            existing.hashed_password = hash_password(settings.ADMIN_PASSWORD)
-            existing.gaming_theme_unlocked = True
-            if not existing.referral_code:
-                existing.referral_code = "admin" + secrets.token_hex(3)
-            db.commit()
-            print(f"✅ ادمین '{settings.ADMIN_USERNAME}' به‌روز شد.")
-        else:
-            db.add(User(
-                username=settings.ADMIN_USERNAME,
-                email=settings.ADMIN_EMAIL,
-                hashed_password=hash_password(settings.ADMIN_PASSWORD),
+        username = settings.ADMIN_USERNAME
+        email = settings.ADMIN_EMAIL
+        password = settings.ADMIN_PASSWORD
+
+        existing = (
+            db.query(User)
+            .filter(User.username == username)
+            .first()
+        )
+
+        if existing is None:
+            if not email or not password:
+                print(
+                    "ADMIN NOT CREATED: "
+                    "Set ADMIN_EMAIL and ADMIN_PASSWORD in Render."
+                )
+                return
+
+            admin = User(
+                username=username,
+                email=email,
+                hashed_password=hash_password(password),
                 is_admin=True,
                 is_active=True,
                 tokens=99999,
                 gaming_theme_unlocked=True,
                 referral_code="admin" + secrets.token_hex(3),
-            ))
+            )
+
+            db.add(admin)
             db.commit()
-            print(f"✅ ادمین '{settings.ADMIN_USERNAME}' ساخته شد.")
-    except Exception as e:
-        print(f"⚠️ خطا در ساخت ادمین: {e}")
+            print("Default admin created.")
+            return
+
+        # Keep the existing account and its data.
+        existing.is_admin = True
+        existing.is_active = True
+        existing.gaming_theme_unlocked = True
+
+        # Never replace the password with an empty value.
+        if email:
+            existing.email = email
+
+        if password:
+            existing.hashed_password = hash_password(password)
+
+        if not existing.referral_code:
+            existing.referral_code = "admin" + secrets.token_hex(3)
+
+        db.commit()
+        print("Default admin checked successfully.")
+
+    except Exception:
+        db.rollback()
+        import logging
+        logging.exception("Failed to initialize the default admin.")
+
     finally:
         db.close()
 
