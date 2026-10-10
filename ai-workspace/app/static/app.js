@@ -372,9 +372,10 @@ if ($("authSubmit")) {
           body: body.toString()
         });
       }
-      }
+
       const data = await r.json();
       if (!r.ok) throw new Error(data.detail || "خطا");
+
       TOKEN = data.access_token;
       localStorage.setItem("token", TOKEN);
       hideAuth();
@@ -461,7 +462,7 @@ document.querySelectorAll(".filter-tab").forEach((t) => {
     currentFilter = t.dataset.filter;
     loadConversations();
   };
-});
+}
 
 // ═══════════════════════════════════════════════════════════════
 // Conversations
