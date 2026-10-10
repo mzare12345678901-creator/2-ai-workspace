@@ -1877,9 +1877,995 @@ if ($("closeSettingsBtn")) {
   $("closeSettingsBtn").onclick = () =>
     $("settingsModal").classList.remove("open");
 }
+// ═══════════════════════════════════════════════════════════════
+// ادامه فایل app.js از بخش حذف گفتگوها
+// ═══════════════════════════════════════════════════════════════
 
 if ($("clearAllChats")) {
   $("clearAllChats").onclick = async () => {
     if (
       !confirm(
-        "همه‌ی گفتگوها
+        "همه‌ی گفتگوها حذف شوند؟ این کار برگشت‌پذیر نیست!"
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/chat/conversations");
+
+      if (!response.ok) {
+        throw new Error("دریافت فهرست گفتگوها ناموفق بود.");
+      }
+
+      const list = await response.json();
+
+      for (const c of list) {
+        const r = await fetch(`/api/chat/conversations/${c.id}`, {
+          method: "DELETE",
+        });
+
+        if (!r.ok) {
+          throw new Error("حذف یکی از گفتگوها ناموفق بود.");
+        }
+      }
+
+      currentConvId = null;
+      currentConvMeta = null;
+
+      if ($("chat")) $("chat").innerHTML = "";
+
+      showWelcomeScreen();
+      updateChatHeader();
+      await loadConversations();
+
+      toast("✅ همه‌ی گفتگوها حذف شدند", "success");
+    } catch (e) {
+      console.error("clearAllChats error:", e);
+      toast("❌ " + e.message, "error");
+    }
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Memory Manager — مدیریت حافظه بلندمدت
+// ═══════════════════════════════════════════════════════════════
+
+if ($("openMemoryManager")) {
+  $("openMemoryManager").onclick = () => {
+    loadMemories();
+
+    if ($("memoryModal")) {
+      $("memoryModal").classList.add("open");
+    }
+  };
+}
+
+if ($("closeMemory")) {
+  $("closeMemory").onclick = () => {
+    $("memoryModal").classList.remove("open");
+  };
+}
+
+if ($("closeMemoryBtn")) {
+  $("closeMemoryBtn").onclick = () => {
+    $("memoryModal").classList.remove("open");
+  };
+}
+
+if ($("addMemory")) {
+  $("addMemory").onclick = async () => {
+    const key = $("memKey").value.trim();
+    const value = $("memValue").value.trim();
+
+    if (!key || !value) {
+      toast("لطفاً کلید و مقدار حافظه را وارد کن.", "warning");
+      return;
+    }
+
+    try {
+      const r = await fetch("/api/memory/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          key,
+          value,
+          category: "general",
+          importance: 5,
+        }),
+      });
+
+      const data = await r.json().catch(() => ({}));
+
+      if (!r.ok) {
+        throw new Error(data.detail || "ذخیره حافظه ناموفق بود.");
+      }
+
+      $("memKey").value = "";
+      $("memValue").value = "";
+
+      await loadMemories();
+      toast("✅ حافظه ذخیره شد", "success");
+    } catch (e) {
+      console.error("addMemory error:", e);
+      toast("❌ " + e.message, "error");
+    }
+  };
+}
+
+async function loadMemories() {
+  try {
+    const r = await fetch("/api/memory/");
+
+    if (!r.ok) {
+      throw new Error("دریافت حافظه‌ها ناموفق بود.");
+    }
+
+    const list = await r.json();
+    const el = $("memoryList");
+
+    if (!el) return;
+
+    el.innerHTML = "";
+
+    if (!Array.isArray(list) || list.length === 0) {
+      el.innerHTML = `
+        <p style="color:var(--fg2);font-size:13px;text-align:center;padding:14px">
+          حافظه‌ای ثبت نشده
+        </p>
+      `;
+      return;
+    }
+
+    list.forEach((m) => {
+      const d = document.createElement("div");
+      d.className = "memory-item";
+
+      d.innerHTML = `
+        <span class="mem-key">${escapeHtml(m.key)}</span>
+        <span class="mem-value">${escapeHtml(m.value)}</span>
+        <button class="mem-del" data-id="${m.id}" type="button">✕</button>
+      `;
+
+      d.querySelector(".mem-del").onclick = async () => {
+        if (!confirm("این مورد از حافظه حذف شود؟")) return;
+
+        try {
+          const response = await fetch(`/api/memory/${m.id}`, {
+            method: "DELETE",
+          });
+
+          if (!response.ok) {
+            const result = await response.json().catch(() => ({}));
+            throw new Error(result.detail || "حذف حافظه ناموفق بود.");
+          }
+
+          await loadMemories();
+          toast("🗑️ حافظه حذف شد", "success");
+        } catch (e) {
+          toast("❌ " + e.message, "error");
+        }
+      };
+
+      el.appendChild(d);
+    });
+  } catch (e) {
+    console.error("loadMemories error:", e);
+    toast("❌ " + e.message, "error");
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Tokens & Referral — توکن‌ها و دعوت دوستان
+// ═══════════════════════════════════════════════════════════════
+
+function updateTokensDisplay(tokens) {
+  const el = $("tokensCount");
+
+  if (el) {
+    el.textContent = (Number(tokens) || 0).toLocaleString("fa-IR");
+  }
+}
+
+async function loadReferralInfo() {
+  try {
+    const r = await fetch("/api/referral/info");
+
+    if (!r.ok) {
+      const errorData = await r.json().catch(() => ({}));
+      throw new Error(errorData.detail || "دریافت اطلاعات دعوت ناموفق بود.");
+    }
+
+    const data = await r.json();
+
+    if ($("myRefCode")) {
+      $("myRefCode").value = data.my_code || "—";
+    }
+
+    if ($("refCount")) {
+      $("refCount").textContent = data.total_referrals || 0;
+    }
+
+    if ($("refTokens")) {
+      $("refTokens").textContent = data.total_tokens_earned || 0;
+    }
+
+    if ($("tokensPerRef")) {
+      $("tokensPerRef").textContent = data.tokens_per_referral || 10;
+    }
+
+    const list = $("refList");
+
+    if (!list) return;
+
+    list.innerHTML = "";
+
+    if (!data.referrals || !data.referrals.length) {
+      list.innerHTML = `
+        <p style="color:var(--fg3);font-size:12px;text-align:center;padding:12px">
+          هنوز کسی رو دعوت نکردی
+        </p>
+      `;
+      return;
+    }
+
+    data.referrals.forEach((referral) => {
+      const d = document.createElement("div");
+
+      d.style.cssText = [
+        "display:flex",
+        "justify-content:space-between",
+        "padding:8px 12px",
+        "background:var(--bg3)",
+        "border-radius:8px",
+        "margin-bottom:4px",
+        "font-size:12px",
+      ].join(";");
+
+      d.innerHTML = `
+        <span>👤 ${escapeHtml(referral.username)}</span>
+        <span style="color:#fbbf24">🪙 +${Number(referral.tokens_awarded) || 0}</span>
+      `;
+
+      list.appendChild(d);
+    });
+  } catch (e) {
+    console.error("referral error:", e);
+    toast("❌ " + e.message, "error");
+  }
+}
+
+if ($("openReferral")) {
+  $("openReferral").onclick = () => {
+    loadReferralInfo();
+
+    if ($("referralModal")) {
+      $("referralModal").classList.add("open");
+    }
+  };
+}
+
+if ($("closeReferral")) {
+  $("closeReferral").onclick = () => {
+    $("referralModal").classList.remove("open");
+  };
+}
+
+if ($("closeReferralBtn")) {
+  $("closeReferralBtn").onclick = () => {
+    $("referralModal").classList.remove("open");
+  };
+}
+
+if ($("copyRefCode")) {
+  $("copyRefCode").onclick = async () => {
+    const code = $("myRefCode") ? $("myRefCode").value : "";
+
+    if (!code || code === "—") {
+      toast("کد معرف در دسترس نیست.", "warning");
+      return;
+    }
+
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(code);
+      } else {
+        const input = $("myRefCode");
+
+        if (!input) return;
+
+        input.focus();
+        input.select();
+
+        if (!document.execCommand("copy")) {
+          throw new Error("کپی خودکار انجام نشد.");
+        }
+      }
+
+      toast("✅ کد معرف کپی شد: " + code, "success");
+    } catch (e) {
+      toast("کپی نشد؛ کد را دستی کپی کن.", "warning");
+    }
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Gaming Theme — تم گیمینگ
+// ═══════════════════════════════════════════════════════════════
+
+async function loadGamingStatus() {
+  try {
+    const r = await fetch("/api/auth/me");
+
+    if (!r.ok) {
+      throw new Error("برای بررسی تم گیمینگ باید وارد حساب شوی.");
+    }
+
+    const me = await r.json();
+    currentUser = me;
+
+    const statusEl = $("gamingStatus");
+    const actionsEl = $("gamingActions");
+
+    if (!statusEl || !actionsEl) return;
+
+    if (me.gaming_theme_unlocked || me.is_admin) {
+      statusEl.innerHTML = `
+        ✅ <b style="color:#22c55e">تم گیمینگ فعال است!</b>
+        می‌تونی از بخش تم‌ها انتخابش کنی.
+      `;
+
+      actionsEl.innerHTML = `
+        <button class="send-btn" id="applyGaming" type="button"
+          style="width:100%;height:48px">
+          🎮 فعال‌سازی تم گیمینگ
+        </button>
+      `;
+
+      $("applyGaming").onclick = async () => {
+        applyTheme("gaming");
+        renderThemeGrid();
+
+        try {
+          await fetch("/api/auth/theme", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ theme: "gaming" }),
+          });
+        } catch (e) {
+          console.error("Saving gaming theme failed:", e);
+        }
+
+        toast("🎮 تم گیمینگ فعال شد!", "success");
+        $("gamingModal").classList.remove("open");
+      };
+    } else {
+      statusEl.textContent =
+        "🔒 برای فعال‌سازی تم گیمینگ، یکی از روش‌های زیر را انتخاب کن.";
+
+      actionsEl.innerHTML = `
+        <button class="send-btn" id="unlockWithTokens" type="button"
+          style="width:100%;height:48px">
+          🪙 فعال‌سازی با توکن
+        </button>
+
+        <button class="btn-ghost" id="unlockWithPayment" type="button"
+          style="height:48px;border-color:#fbbf24;color:#fbbf24">
+          💰 درخواست پرداخت
+        </button>
+      `;
+
+      $("unlockWithTokens").onclick = async () => {
+        if (!confirm("آیا می‌خواهی تم گیمینگ را با توکن فعال کنی؟")) {
+          return;
+        }
+
+        try {
+          const response = await fetch(
+            "/api/referral/unlock-gaming-theme",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ method: "tokens" }),
+            }
+          );
+
+          const data = await response.json().catch(() => ({}));
+
+          if (!response.ok) {
+            throw new Error(data.detail || "فعال‌سازی ناموفق بود.");
+          }
+
+          toast("🎮 تم گیمینگ فعال شد!", "success");
+
+          if (typeof data.remaining_tokens === "number") {
+            updateTokensDisplay(data.remaining_tokens);
+          }
+
+          await loadGamingStatus();
+          renderThemeGrid();
+        } catch (e) {
+          toast("❌ " + e.message, "error");
+        }
+      };
+
+      $("unlockWithPayment").onclick = async () => {
+        try {
+          const response = await fetch(
+            "/api/referral/unlock-gaming-theme",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ method: "payment" }),
+            }
+          );
+
+          const data = await response.json().catch(() => ({}));
+
+          if (!response.ok) {
+            throw new Error(data.detail || "ساخت درخواست پرداخت ناموفق بود.");
+          }
+
+          if (data.payment_url) {
+            window.location.href = data.payment_url;
+            return;
+          }
+
+          toast("✅ درخواست ثبت شد.", "success");
+          $("gamingModal").classList.remove("open");
+        } catch (e) {
+          toast("❌ " + e.message, "error");
+        }
+      };
+    }
+  } catch (e) {
+    console.error("loadGamingStatus error:", e);
+    toast("❌ " + e.message, "error");
+  }
+}
+
+if ($("openGaming")) {
+  $("openGaming").onclick = () => {
+    loadGamingStatus();
+
+    if ($("gamingModal")) {
+      $("gamingModal").classList.add("open");
+    }
+  };
+}
+
+if ($("closeGaming")) {
+  $("closeGaming").onclick = () => {
+    $("gamingModal").classList.remove("open");
+  };
+}
+
+if ($("closeGamingBtn")) {
+  $("closeGamingBtn").onclick = () => {
+    $("gamingModal").classList.remove("open");
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Admin Settings — تنظیمات ادمین
+// ═══════════════════════════════════════════════════════════════
+
+if ($("openAdminSettings")) {
+  $("openAdminSettings").onclick = async () => {
+    try {
+      const r = await fetch("/api/settings/admin");
+      const s = await r.json().catch(() => ({}));
+
+      if (!r.ok) {
+        throw new Error(s.detail || "دسترسی به تنظیمات ادمین ممکن نیست.");
+      }
+
+      const set = (id, value) => {
+        const el = $(id);
+        if (el && value !== undefined && value !== null) {
+          el.value = value;
+        }
+      };
+
+      const setChk = (id, value) => {
+        const el = $(id);
+        if (el && value !== undefined && value !== null) {
+          el.checked = Boolean(value);
+        }
+      };
+
+      const setTxt = (id, value) => {
+        const el = $(id);
+        if (el && value !== undefined && value !== null) {
+          el.textContent = value;
+        }
+      };
+
+      set("admAiKey", "");
+      if ($("admAiKey")) {
+        $("admAiKey").placeholder = s.ai_api_key_masked || "کلید API";
+      }
+
+      set("admAiUrl", s.ai_base_url || "");
+      set("admAiModel", s.ai_model || "");
+      set("admAiTemp", s.ai_temperature);
+      setTxt("admTempVal", s.ai_temperature);
+      set("admAiMaxTokens", s.ai_max_tokens);
+      set("admSysPrompt", s.ai_system_prompt || "");
+
+      setChk("admFallbackEnabled", s.fallback_enabled);
+      set("admFbKey", "");
+
+      if ($("admFbKey")) {
+        $("admFbKey").placeholder =
+          s.fallback_api_key_masked || "کلید API جایگزین";
+      }
+
+      set("admFbUrl", s.fallback_base_url || "");
+      set("admFbModel", s.fallback_model || "");
+
+      setChk("admMaintenance", s.maintenance_mode);
+      set("admMaintenanceMsg", s.maintenance_message || "");
+      setChk("admAllowReg", s.allow_registration);
+
+      set("admSiteName", s.site_name || "");
+      set("admSiteDesc", s.site_description || "");
+      set("admWelcome", s.welcome_message || "");
+
+      set("admMaxUpload", s.max_upload_mb);
+      set("admDailyMsg", s.daily_message_limit);
+      set("admMaxUsers", s.max_users);
+      set("admRateLimit", s.rate_limit_per_minute);
+      set("admMinPass", s.min_password_length);
+      set("admSessionDays", s.session_days);
+
+      setChk("admRequireEmail", s.require_email_verification);
+
+      set("admDefTheme", s.default_theme);
+      set("admDefModel", s.default_model);
+      set("admDefTemp", s.default_temperature);
+      setTxt("admDefTempVal", s.default_temperature);
+
+      setChk("admDefStreaming", s.default_streaming);
+      setChk("admReferralEnabled", s.referral_enabled);
+      set("admReferralTokens", s.referral_tokens);
+      set("admGamingPrice", s.gaming_theme_price);
+      set("admGamingTokenPrice", s.gaming_theme_token_price);
+
+      if ($("testApiResult")) {
+        $("testApiResult").textContent = "";
+      }
+
+      $("adminSettingsModal").classList.add("open");
+    } catch (e) {
+      console.error("openAdminSettings error:", e);
+      toast("❌ " + e.message, "error");
+    }
+  };
+}
+
+if ($("closeAdminSettings")) {
+  $("closeAdminSettings").onclick = () => {
+    $("adminSettingsModal").classList.remove("open");
+  };
+}
+
+if ($("closeAdminSettingsBtn")) {
+  $("closeAdminSettingsBtn").onclick = () => {
+    $("adminSettingsModal").classList.remove("open");
+  };
+}
+
+document.querySelectorAll("#adminTabs .tab").forEach((tab) => {
+  tab.onclick = () => {
+    document
+      .querySelectorAll("#adminTabs .tab")
+      .forEach((item) => item.classList.remove("active"));
+
+    document
+      .querySelectorAll("#adminSettingsModal .tab-content")
+      .forEach((item) => item.classList.remove("active"));
+
+    tab.classList.add("active");
+
+    const target = document.querySelector(
+      `#adminSettingsModal .tab-content[data-atab="${tab.dataset.atab}"]`
+    );
+
+    if (target) target.classList.add("active");
+  };
+});
+
+if ($("admAiTemp")) {
+  $("admAiTemp").oninput = () => {
+    if ($("admTempVal")) {
+      $("admTempVal").textContent = $("admAiTemp").value;
+    }
+  };
+}
+
+if ($("admDefTemp")) {
+  $("admDefTemp").oninput = () => {
+    if ($("admDefTempVal")) {
+      $("admDefTempVal").textContent = $("admDefTemp").value;
+    }
+  };
+}
+
+if ($("saveAdminSettings")) {
+  $("saveAdminSettings").onclick = async () => {
+    try {
+      const body = {
+        ai_base_url: $("admAiUrl").value,
+        ai_model: $("admAiModel").value,
+        ai_temperature: parseFloat($("admAiTemp").value),
+        ai_max_tokens: parseInt($("admAiMaxTokens").value, 10),
+        ai_system_prompt: $("admSysPrompt").value,
+        fallback_enabled: $("admFallbackEnabled").checked,
+        fallback_base_url: $("admFbUrl").value,
+        fallback_model: $("admFbModel").value,
+        maintenance_mode: $("admMaintenance").checked,
+        maintenance_message: $("admMaintenanceMsg").value,
+        allow_registration: $("admAllowReg").checked,
+        site_name: $("admSiteName").value,
+        site_description: $("admSiteDesc").value,
+        welcome_message: $("admWelcome").value,
+        max_upload_mb: parseInt($("admMaxUpload").value, 10),
+        daily_message_limit: parseInt($("admDailyMsg").value, 10),
+        max_users: parseInt($("admMaxUsers").value, 10),
+        rate_limit_per_minute: parseInt($("admRateLimit").value, 10),
+        min_password_length: parseInt($("admMinPass").value, 10),
+        session_days: parseInt($("admSessionDays").value, 10),
+        require_email_verification: $("admRequireEmail").checked,
+        default_theme: $("admDefTheme").value,
+        default_model: $("admDefModel").value,
+        default_temperature: parseFloat($("admDefTemp").value),
+        default_streaming: $("admDefStreaming").checked,
+        referral_enabled: $("admReferralEnabled").checked,
+        referral_tokens: parseInt($("admReferralTokens").value, 10),
+        gaming_theme_price: parseInt($("admGamingPrice").value, 10),
+        gaming_theme_token_price: parseInt($("admGamingTokenPrice").value, 10),
+      };
+
+      if ($("admAiKey").value) {
+        body.ai_api_key = $("admAiKey").value;
+      }
+
+      if ($("admFbKey").value) {
+        body.fallback_api_key = $("admFbKey").value;
+      }
+
+      const r = await fetch("/api/settings/admin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      const data = await r.json().catch(() => ({}));
+
+      if (!r.ok) {
+        throw new Error(data.detail || "ذخیره تنظیمات ناموفق بود.");
+      }
+
+      toast("✅ تنظیمات ادمین ذخیره شد", "success");
+      $("adminSettingsModal").classList.remove("open");
+    } catch (e) {
+      console.error("saveAdminSettings error:", e);
+      toast("❌ " + e.message, "error");
+    }
+  };
+}
+
+if ($("testAdminApi")) {
+  $("testAdminApi").onclick = async () => {
+    const el = $("testApiResult");
+
+    if (!el) return;
+
+    el.style.color = "var(--fg2)";
+    el.textContent = "⏳ در حال تست اتصال...";
+
+    try {
+      const body = {
+        ai_base_url: $("admAiUrl").value,
+        ai_model: $("admAiModel").value,
+      };
+
+      if ($("admAiKey").value) {
+        body.ai_api_key = $("admAiKey").value;
+      }
+
+      const saveResponse = await fetch("/api/settings/admin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      const saveData = await saveResponse.json().catch(() => ({}));
+
+      if (!saveResponse.ok) {
+        throw new Error(
+          saveData.detail || "ذخیره تنظیمات API ناموفق بود."
+        );
+      }
+
+      const r = await fetch("/api/settings/admin/test", {
+        method: "POST",
+      });
+
+      const data = await r.json().catch(() => ({}));
+
+      if (!r.ok || !data.ok) {
+        throw new Error(data.error || data.detail || "اتصال برقرار نشد.");
+      }
+
+      el.style.color = "#22c55e";
+      el.textContent = "✅ اتصال موفق! " + (data.reply || "");
+    } catch (e) {
+      el.style.color = "#ef4444";
+      el.textContent = "❌ " + e.message;
+    }
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Request Admin — درخواست ادمین
+// ═══════════════════════════════════════════════════════════════
+
+if ($("requestAdminBtn")) {
+  $("requestAdminBtn").onclick = () => {
+    if ($("requestStatus")) {
+      $("requestStatus").textContent = "";
+    }
+
+    $("requestModal").classList.add("open");
+  };
+}
+
+if ($("closeRequest")) {
+  $("closeRequest").onclick = () => {
+    $("requestModal").classList.remove("open");
+  };
+}
+
+if ($("closeRequestBtn")) {
+  $("closeRequestBtn").onclick = () => {
+    $("requestModal").classList.remove("open");
+  };
+}
+
+if ($("submitRequest")) {
+  $("submitRequest").onclick = async () => {
+    const reason = $("requestReason").value;
+    const statusEl = $("requestStatus");
+
+    try {
+      const r = await fetch("/api/auth/request-admin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason }),
+      });
+
+      const data = await r.json().catch(() => ({}));
+
+      if (!r.ok) {
+        throw new Error(data.detail || "ارسال درخواست ناموفق بود.");
+      }
+
+      if (statusEl) {
+        statusEl.style.color = "#22c55e";
+        statusEl.textContent = "✅ درخواست ارسال شد.";
+      }
+
+      $("requestAdminBtn").innerHTML =
+        "<span>⏳</span> در انتظار تأیید";
+    } catch (e) {
+      if (statusEl) {
+        statusEl.style.color = "#ef4444";
+        statusEl.textContent = "❌ " + e.message;
+      }
+    }
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Command Palette — پالت فرمان‌ها
+// ═══════════════════════════════════════════════════════════════
+
+const COMMANDS = [
+  {
+    icon: "➕",
+    title: "گفتگوی جدید",
+    desc: "شروع یک مکالمه جدید",
+    shortcut: "Ctrl+N",
+    action: () => $("newChat") && $("newChat").click(),
+  },
+  {
+    icon: "⚙️",
+    title: "تنظیمات",
+    desc: "باز کردن تنظیمات",
+    action: () => $("openSettings") && $("openSettings").click(),
+  },
+  {
+    icon: "🎁",
+    title: "دعوت دوستان",
+    desc: "کد معرف و توکن‌ها",
+    action: () => $("openReferral") && $("openReferral").click(),
+  },
+  {
+    icon: "🎮",
+    title: "تم گیمینگ",
+    desc: "خرید یا فعال‌سازی",
+    action: () => $("openGaming") && $("openGaming").click(),
+  },
+  {
+    icon: "🔍",
+    title: "جستجو در گفتگوها",
+    desc: "جستجوی گفتگوها",
+    action: () => $("searchInput") && $("searchInput").focus(),
+  },
+  {
+    icon: "📦",
+    title: "بکاپ گفتگوها",
+    desc: "دانلود گفتگوها",
+    action: () => $("exportAllBtn") && $("exportAllBtn").click(),
+  },
+  {
+    icon: "🚪",
+    title: "خروج",
+    desc: "خروج از حساب",
+    action: () => $("logoutBtn") && $("logoutBtn").click(),
+  },
+  {
+    icon: "☰",
+    title: "نمایش یا مخفی کردن منو",
+    desc: "باز و بسته کردن سایدبار",
+    shortcut: "Ctrl+B",
+    action: toggleSidebar,
+  },
+  {
+    icon: "🎙️",
+    title: "میکروفون",
+    desc: "شروع ضبط",
+    action: () => $("micBtn") && $("micBtn").click(),
+  },
+];
+
+let paletteSelected = 0;
+
+function renderPalette(query = "") {
+  const list = $("paletteList");
+
+  if (!list) return;
+
+  list.innerHTML = "";
+
+  const q = query.toLowerCase();
+
+  const filtered = COMMANDS.filter(
+    (c) =>
+      c.title.toLowerCase().includes(q) ||
+      c.desc.toLowerCase().includes(q)
+  );
+
+  if (!filtered.length) {
+    list.innerHTML = `
+      <div style="padding:20px;text-align:center;color:var(--fg2);font-size:13px">
+        چیزی پیدا نشد
+      </div>
+    `;
+    return;
+  }
+
+  paletteSelected = 0;
+
+  filtered.forEach((c, i) => {
+    const d = document.createElement("div");
+
+    d.className =
+      "palette-item" + (i === 0 ? " selected" : "");
+
+    d.innerHTML = `
+      <span class="palette-item-icon">${c.icon}</span>
+      <div class="palette-item-content">
+        <div class="palette-item-title">${escapeHtml(c.title)}</div>
+        <div class="palette-item-desc">${escapeHtml(c.desc)}</div>
+      </div>
+      ${c.shortcut ? `<span class="palette-item-shortcut">${c.shortcut}</span>` : ""}
+    `;
+
+    d.onclick = () => {
+      c.action();
+
+      if ($("commandPalette")) {
+        $("commandPalette").classList.remove("open");
+      }
+    };
+
+    list.appendChild(d);
+  });
+}
+
+if ($("paletteInput")) {
+  $("paletteInput").addEventListener("input", (e) => {
+    renderPalette(e.target.value);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Keyboard Shortcuts — میانبرهای صفحه‌کلید
+// ═══════════════════════════════════════════════════════════════
+
+document.addEventListener("keydown", (e) => {
+  // Ctrl+K: باز کردن پالت فرمان
+  if (e.ctrlKey && e.key.toLowerCase() === "k") {
+    e.preventDefault();
+
+    if ($("commandPalette")) {
+      $("commandPalette").classList.add("open");
+      renderPalette();
+
+      setTimeout(() => {
+        if ($("paletteInput")) $("paletteInput").focus();
+      }, 100);
+    }
+  }
+
+  // Ctrl+N: گفتگوی جدید
+  if (e.ctrlKey && e.key.toLowerCase() === "n") {
+    e.preventDefault();
+
+    if ($("newChat")) {
+      $("newChat").click();
+    }
+  }
+
+  // Ctrl+/: فوکوس روی ورودی پیام
+  if (e.ctrlKey && e.key === "/") {
+    e.preventDefault();
+
+    if ($("input")) $("input").focus();
+  }
+
+  // Ctrl+B: سایدبار
+  if (e.ctrlKey && e.key.toLowerCase() === "b") {
+    e.preventDefault();
+    toggleSidebar();
+  }
+
+  // Escape: بستن پنجره‌ها
+  if (e.key === "Escape") {
+    document
+      .querySelectorAll(".modal.open")
+      .forEach((modal) => modal.classList.remove("open"));
+  }
+
+  // Enter: اجرای فرمان انتخاب‌شده
+  if (
+    $("commandPalette") &&
+    $("commandPalette").classList.contains("open") &&
+    e.key === "Enter"
+  ) {
+    const items = document.querySelectorAll(".palette-item");
+
+    if (items[paletteSelected]) {
+      items[paletteSelected].click();
+    }
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// Init — راه‌اندازی نهایی
+// ═══════════════════════════════════════════════════════════════
+
+if (window.mermaid) {
+  mermaid.initialize({
+    startOnLoad: false,
+    theme: "dark",
+  });
+}
+
+// پس از ثبت همه‌ی دکمه‌ها، وضعیت ورود بررسی می‌شود.
+checkAuth();
+
+console.info("✅ AI Workspace JavaScript loaded successfully.");
