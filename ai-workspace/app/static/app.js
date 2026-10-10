@@ -58,15 +58,18 @@ function hideAuth() {
 // Fetch interceptor (اضافه کردن توکن)
 // ═══════════════════════════════════════════════════════════════
 const origFetch = window.fetch;
-window.fetch = function(url, opts = {}) {
+
+window.fetch = function (url, opts = {}) {
   if (typeof url === "string" && url.startsWith("/api/") && TOKEN) {
     opts.headers = opts.headers || {};
+
     if (opts.headers instanceof Headers) {
       opts.headers.set("Authorization", "Bearer " + TOKEN);
     } else {
       opts.headers["Authorization"] = "Bearer " + TOKEN;
     }
   }
+
   return origFetch(url, opts);
 };
 
@@ -74,17 +77,23 @@ window.fetch = function(url, opts = {}) {
 // THEMES — ۱۱ تم
 // ═══════════════════════════════════════════════════════════════
 const THEMES = [
-  { id: "dark",      name: "شبانه",   bg: "#0f1117", accent: "#6c8eff" },
-  { id: "light",     name: "روزانه",  bg: "#f6f7fb", accent: "#4f6cff" },
-  { id: "ocean",     name: "اقیانوس", bg: "#0a1929", accent: "#06b6d4" },
-  { id: "sunset",    name: "غروب",    bg: "#1a0f0a", accent: "#f97316" },
-  { id: "forest",    name: "جنگل",    bg: "#0a1410", accent: "#22c55e" },
-  { id: "purple",    name: "بنفش",    bg: "#1a0f2e", accent: "#a855f7" },
-  { id: "rose",      name: "رز",      bg: "#1f0f18", accent: "#f43f5e" },
-  { id: "cyberpunk", name: "سایبر",   bg: "#0a0a14", accent: "#ec4899" },
-  { id: "coffee",    name: "قهوه",    bg: "#1a120b", accent: "#c084fc" },
-  { id: "mono",      name: "تک‌رنگ",  bg: "#000000", accent: "#ffffff" },
-  { id: "gaming",    name: "🎮 گیمینگ", bg: "#05060d", accent: "#8b5cf6", locked: true },
+  { id: "dark", name: "شبانه", bg: "#0f1117", accent: "#6c8eff" },
+  { id: "light", name: "روزانه", bg: "#f6f7fb", accent: "#4f6cff" },
+  { id: "ocean", name: "اقیانوس", bg: "#0a1929", accent: "#06b6d4" },
+  { id: "sunset", name: "غروب", bg: "#1a0f0a", accent: "#f97316" },
+  { id: "forest", name: "جنگل", bg: "#0a1410", accent: "#22c55e" },
+  { id: "purple", name: "بنفش", bg: "#1a0f2e", accent: "#a855f7" },
+  { id: "rose", name: "رز", bg: "#1f0f18", accent: "#f43f5e" },
+  { id: "cyberpunk", name: "سایبر", bg: "#0a0a14", accent: "#ec4899" },
+  { id: "coffee", name: "قهوه", bg: "#1a120b", accent: "#c084fc" },
+  { id: "mono", name: "تک‌رنگ", bg: "#000000", accent: "#ffffff" },
+  {
+    id: "gaming",
+    name: "🎮 گیمینگ",
+    bg: "#05060d",
+    accent: "#8b5cf6",
+    locked: true,
+  },
 ];
 
 function applyTheme(id) {
@@ -95,19 +104,27 @@ function applyTheme(id) {
 function renderThemeGrid() {
   const grid = $("themeGrid");
   if (!grid) return;
-  grid.innerHTML = "";
-  const cur = localStorage.getItem("theme") || "dark";
-  const isGamingUnlocked = currentUser && currentUser.gaming_theme_unlocked;
 
-  THEMES.forEach(t => {
+  grid.innerHTML = "";
+
+  const cur = localStorage.getItem("theme") || "dark";
+  const isGamingUnlocked =
+    currentUser && currentUser.gaming_theme_unlocked;
+
+  THEMES.forEach((t) => {
     const d = document.createElement("div");
     const isLocked = t.locked && !isGamingUnlocked;
 
-    d.className = "theme-swatch" + (t.id === cur ? " active" : "") + (isLocked ? " locked" : "");
+    d.className =
+      "theme-swatch" +
+      (t.id === cur ? " active" : "") +
+      (isLocked ? " locked" : "");
+
     if (t.id === "gaming") {
       d.classList.add("gaming-swatch");
       if (isGamingUnlocked) d.classList.add("unlocked");
     }
+
     d.style.background = `linear-gradient(135deg, ${t.bg}, ${t.accent})`;
     d.innerHTML = `<span>${t.name}</span>`;
 
@@ -115,12 +132,17 @@ function renderThemeGrid() {
       if (isLocked) {
         if ($("gamingModal")) {
           $("gamingModal").classList.add("open");
-          if (typeof loadGamingStatus === "function") loadGamingStatus();
+
+          if (typeof loadGamingStatus === "function") {
+            loadGamingStatus();
+          }
         }
         return;
       }
+
       applyTheme(t.id);
       renderThemeGrid();
+
       if (TOKEN) {
         try {
           await fetch("/api/auth/theme", {
@@ -158,11 +180,15 @@ if (window.marked) {
 
 function renderMarkdown(text, targetEl) {
   let html;
+
   try {
-    html = window.marked ? marked.parse(text) : escapeHtml(text).replace(/\n/g, "<br>");
+    html = window.marked
+      ? marked.parse(text)
+      : escapeHtml(text).replace(/\n/g, "<br>");
   } catch {
     html = escapeHtml(text).replace(/\n/g, "<br>");
   }
+
   targetEl.innerHTML = html;
 
   // LaTeX
@@ -185,10 +211,13 @@ function renderMarkdown(text, targetEl) {
     targetEl.querySelectorAll("code.language-mermaid").forEach(async (codeEl) => {
       const graph = codeEl.textContent;
       const id = "mermaid-" + Math.random().toString(36).slice(2);
+
       const container = document.createElement("div");
       container.className = "mermaid";
       container.id = id;
+
       codeEl.parentElement.replaceWith(container);
+
       try {
         const { svg } = await mermaid.render(id + "-svg", graph);
         container.innerHTML = svg;
@@ -201,29 +230,49 @@ function renderMarkdown(text, targetEl) {
   // Code toolbar
   targetEl.querySelectorAll("pre").forEach((pre) => {
     if (pre.querySelector(".code-toolbar")) return;
+
     const code = pre.querySelector("code");
     if (!code) return;
 
     const toolbar = document.createElement("div");
     toolbar.className = "code-toolbar";
+
     toolbar.innerHTML = `
       <button data-act="copy">📋 کپی</button>
       <button data-act="download">⬇️ دانلود</button>
     `;
+
     toolbar.querySelector('[data-act="copy"]').onclick = () => {
       navigator.clipboard.writeText(code.textContent);
       toast("✅ کپی شد", "success");
     };
+
     toolbar.querySelector('[data-act="download"]').onclick = () => {
-      const lang = (code.className.match(/language-(\w+)/) || [])[1] || "txt";
-      const ext = { python: "py", javascript: "js", typescript: "ts", html: "html", css: "css", json: "json", bash: "sh" }[lang] || lang;
-      const blob = new Blob([code.textContent], { type: "text/plain" });
+      const lang =
+        (code.className.match(/language-(\w+)/) || [])[1] || "txt";
+
+      const ext = {
+        python: "py",
+        javascript: "js",
+        typescript: "ts",
+        html: "html",
+        css: "css",
+        json: "json",
+        bash: "sh",
+      }[lang] || lang;
+
+      const blob = new Blob([code.textContent], {
+        type: "text/plain",
+      });
+
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
       a.download = `code.${ext}`;
       a.click();
+
       toast("✅ دانلود شد", "success");
     };
+
     pre.appendChild(toolbar);
   });
 }
@@ -249,17 +298,31 @@ async function checkAuth() {
 
   try {
     const r = await fetch("/api/auth/me");
-    if (!r.ok) throw new Error();
+
+    if (!r.ok) throw new Error("اعتبار ورود منقضی یا نامعتبر است.");
+
     currentUser = await r.json();
+
     hideAuth();
     applyTheme(currentUser.theme || "dark");
 
     // User info در سایدبار
-    if ($("userAvatar")) $("userAvatar").textContent = (currentUser.username || "?").charAt(0).toUpperCase();
-    if ($("userName")) $("userName").textContent = currentUser.username;
+    if ($("userAvatar")) {
+      $("userAvatar").textContent =
+        (currentUser.username || "?").charAt(0).toUpperCase();
+    }
+
+    if ($("userName")) {
+      $("userName").textContent = currentUser.username;
+    }
+
     if ($("userRole")) {
-      $("userRole").textContent = currentUser.is_admin ? "👑 ادمین" : "کاربر";
-      $("userRole").className = "user-role" + (currentUser.is_admin ? " admin" : "");
+      $("userRole").textContent = currentUser.is_admin
+        ? "👑 ادمین"
+        : "کاربر";
+
+      $("userRole").className =
+        "user-role" + (currentUser.is_admin ? " admin" : "");
     }
 
     // توکن‌ها
@@ -274,23 +337,43 @@ async function checkAuth() {
     // نمایش دکمه‌ها بر اساس نقش
     if (currentUser.is_admin) {
       if ($("adminLink")) $("adminLink").style.display = "flex";
-      if ($("openAdminSettings")) $("openAdminSettings").style.display = "flex";
-      if ($("requestAdminBtn")) $("requestAdminBtn").style.display = "none";
+      if ($("openAdminSettings")) {
+        $("openAdminSettings").style.display = "flex";
+      }
+      if ($("requestAdminBtn")) {
+        $("requestAdminBtn").style.display = "none";
+      }
     } else {
       if ($("adminLink")) $("adminLink").style.display = "none";
-      if ($("openAdminSettings")) $("openAdminSettings").style.display = "none";
-      if ($("requestAdminBtn")) $("requestAdminBtn").style.display = "flex";
+      if ($("openAdminSettings")) {
+        $("openAdminSettings").style.display = "none";
+      }
+      if ($("requestAdminBtn")) {
+        $("requestAdminBtn").style.display = "flex";
+      }
+
       try {
-        const req = await fetch("/api/auth/my-admin-request").then((r) => (r.ok ? r.json() : null));
-        if (req && req.status === "pending" && $("requestAdminBtn")) {
-          $("requestAdminBtn").innerHTML = "<span>⏳</span> در انتظار تأیید";
+        const req = await fetch("/api/auth/my-admin-request").then((r) =>
+          r.ok ? r.json() : null
+        );
+
+        if (
+          req &&
+          req.status === "pending" &&
+          $("requestAdminBtn")
+        ) {
+          $("requestAdminBtn").innerHTML =
+            "<span>⏳</span> در انتظار تأیید";
         }
       } catch {}
     }
 
     loadConversations();
-  } catch {
+  } catch (e) {
+    console.error("checkAuth error:", e);
+
     TOKEN = null;
+    currentUser = null;
     localStorage.removeItem("token");
     showAuth();
   }
@@ -298,10 +381,15 @@ async function checkAuth() {
 
 function applyUserSettings(s) {
   if (!s) return;
+
   document.body.style.fontSize = s.font_size + "px";
   document.body.classList.toggle("compact", s.compact_mode);
+
   const ap = $("agentPanel");
-  if (ap) ap.style.display = s.show_agent_timeline ? "block" : "none";
+
+  if (ap) {
+    ap.style.display = s.show_agent_timeline ? "block" : "none";
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -310,22 +398,47 @@ function applyUserSettings(s) {
 if ($("authToggle")) {
   $("authToggle").onclick = (e) => {
     e.preventDefault();
+
     isRegister = !isRegister;
-    $("authTitle").textContent = isRegister ? "📝 ثبت‌نام" : "🔐 ورود به حساب";
-    $("authSubtitle").textContent = isRegister ? "حساب جدید بساز" : "به AI Workspace خوش آمدی";
-    if ($("authEmailField")) $("authEmailField").style.display = isRegister ? "block" : "none";
-    if ($("authReferralField")) $("authReferralField").style.display = isRegister ? "block" : "none";
-    $("authSubmitText").textContent = isRegister ? "ثبت‌نام" : "ورود به حساب";
-    $("authToggleText").textContent = isRegister ? "حساب داری؟" : "حساب نداری؟";
-    $("authToggle").textContent = isRegister ? "وارد شو" : "ثبت‌نام کن";
+
+    $("authTitle").textContent = isRegister
+      ? "📝 ثبت‌نام"
+      : "🔐 ورود به حساب";
+
+    $("authSubtitle").textContent = isRegister
+      ? "حساب جدید بساز"
+      : "به AI Workspace خوش آمدی";
+
+    if ($("authEmailField")) {
+      $("authEmailField").style.display = isRegister ? "block" : "none";
+    }
+
+    if ($("authReferralField")) {
+      $("authReferralField").style.display = isRegister ? "block" : "none";
+    }
+
+    $("authSubmitText").textContent = isRegister
+      ? "ثبت‌نام"
+      : "ورود به حساب";
+
+    $("authToggleText").textContent = isRegister
+      ? "حساب داری؟"
+      : "حساب نداری؟";
+
+    $("authToggle").textContent = isRegister
+      ? "وارد شو"
+      : "ثبت‌نام کن";
   };
 }
 
 if ($("togglePass")) {
   $("togglePass").onclick = () => {
     const p = $("authPassword");
+
     p.type = p.type === "password" ? "text" : "password";
-    $("togglePass").textContent = p.type === "password" ? "👁️" : "🙈";
+
+    $("togglePass").textContent =
+      p.type === "password" ? "👁️" : "🙈";
   };
 }
 
@@ -333,58 +446,129 @@ if ($("authSubmit")) {
   $("authSubmit").onclick = async () => {
     const username = $("authUsername").value.trim();
     const password = $("authPassword").value;
-    const email = $("authEmail") ? $("authEmail").value.trim() : "";
-    const referral = $("authReferral") ? $("authReferral").value.trim() : "";
+    const email = $("authEmail")
+      ? $("authEmail").value.trim()
+      : "";
+    const referral = $("authReferral")
+      ? $("authReferral").value.trim()
+      : "";
     const err = $("authError");
+    const submitBtn = $("authSubmit");
+    const submitText = $("authSubmitText");
+
+    if (!err || !submitText) return;
+
     err.classList.remove("show");
+    err.textContent = "";
 
     if (!username || !password) {
       err.textContent = "نام کاربری و رمز عبور الزامی است";
       err.classList.add("show");
       return;
     }
+
     if (isRegister && !email) {
       err.textContent = "ایمیل الزامی است";
       err.classList.add("show");
       return;
     }
 
-    $("authSubmitText").textContent = isRegister ? "در حال ثبت‌نام..." : "در حال ورود...";
+    if (isRegister && password.length < 6) {
+      err.textContent = "رمز عبور باید حداقل ۶ کاراکتر باشد.";
+      err.classList.add("show");
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitText.textContent = isRegister
+      ? "در حال ثبت‌نام..."
+      : "در حال ورود...";
 
     try {
       let r;
+
       if (isRegister) {
         r = await fetch("/api/auth/register", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, email, password, referral_code: referral || null }),
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            username,
+            email,
+            password,
+            referral_code: referral || null,
+          }),
         });
       } else {
         const body = new URLSearchParams();
+
         body.set("username", username);
         body.set("password", password);
 
         r = await fetch("/api/auth/login", {
           method: "POST",
           headers: {
-            "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+            "Content-Type":
+              "application/x-www-form-urlencoded;charset=UTF-8",
           },
-          body: body.toString()
+          body: body.toString(),
         });
       }
 
-      const data = await r.json();
-      if (!r.ok) throw new Error(data.detail || "خطا");
+      let data;
+
+      try {
+        data = await r.json();
+      } catch {
+        throw new Error(
+          "پاسخ سرور قابل خواندن نیست. لطفاً خطاهای Render را بررسی کن."
+        );
+      }
+
+      if (!r.ok) {
+        let message = data.detail || data.message || "عملیات ناموفق بود.";
+
+        if (Array.isArray(message)) {
+          message = message
+            .map((item) => item.msg || JSON.stringify(item))
+            .join("، ");
+        }
+
+        throw new Error(message);
+      }
+
+      if (!data.access_token) {
+        throw new Error(
+          "ورود انجام شد، اما سرور توکن ورود را ارسال نکرد."
+        );
+      }
 
       TOKEN = data.access_token;
+      currentUser = data.user || null;
+
       localStorage.setItem("token", TOKEN);
+
       hideAuth();
-      $("chat").innerHTML = "";
-      checkAuth();
+
+      if ($("chat")) {
+        $("chat").innerHTML = "";
+      }
+
+      await checkAuth();
     } catch (e) {
-      err.textContent = e.message;
+      console.error("Login/Register error:", e);
+
+      err.textContent =
+        e.message || "خطای نامشخص هنگام ورود یا ثبت‌نام رخ داد.";
+
       err.classList.add("show");
-      $("authSubmitText").textContent = isRegister ? "ثبت‌نام" : "ورود به حساب";
+    } finally {
+      submitBtn.disabled = false;
+
+      submitText.textContent = isRegister
+        ? "ثبت‌نام"
+        : "ورود به حساب";
     }
   };
 }
@@ -396,9 +580,13 @@ if ($("logoutBtn")) {
   $("logoutBtn").onclick = () => {
     TOKEN = null;
     currentUser = null;
+    userSettings = null;
+
     localStorage.removeItem("token");
-    $("chat").innerHTML = "";
-    $("convList").innerHTML = "";
+
+    if ($("chat")) $("chat").innerHTML = "";
+    if ($("convList")) $("convList").innerHTML = "";
+
     showAuth();
   };
 }
@@ -409,8 +597,11 @@ if ($("logoutBtn")) {
 function toggleSidebar() {
   const sidebar = $("sidebar");
   const overlay = $("sidebarOverlay");
+
   if (!sidebar) return;
+
   const isNowHidden = sidebar.classList.toggle("hidden");
+
   if (overlay) {
     if (isNowHidden) {
       overlay.classList.remove("show");
@@ -423,13 +614,18 @@ function toggleSidebar() {
 function closeSidebar() {
   const sidebar = $("sidebar");
   const overlay = $("sidebarOverlay");
+
   if (sidebar) sidebar.classList.add("hidden");
   if (overlay) overlay.classList.remove("show");
 }
 
 if ($("menuBtn")) $("menuBtn").onclick = toggleSidebar;
-if ($("closeSidebarMobile")) $("closeSidebarMobile").onclick = closeSidebar;
-if ($("sidebarOverlay")) $("sidebarOverlay").onclick = closeSidebar;
+if ($("closeSidebarMobile")) {
+  $("closeSidebarMobile").onclick = closeSidebar;
+}
+if ($("sidebarOverlay")) {
+  $("sidebarOverlay").onclick = closeSidebar;
+}
 
 window.addEventListener("resize", () => {
   if (window.innerWidth > 760 && $("sidebarOverlay")) {
@@ -441,7 +637,11 @@ window.addEventListener("resize", () => {
 if ($("searchInput")) {
   $("searchInput").addEventListener("input", (e) => {
     currentSearch = e.target.value.trim();
-    if ($("clearSearch")) $("clearSearch").style.display = currentSearch ? "block" : "none";
+
+    if ($("clearSearch")) {
+      $("clearSearch").style.display = currentSearch ? "block" : "none";
+    }
+
     loadConversations();
   });
 }
@@ -450,19 +650,26 @@ if ($("clearSearch")) {
   $("clearSearch").onclick = () => {
     $("searchInput").value = "";
     currentSearch = "";
+
     $("clearSearch").style.display = "none";
+
     loadConversations();
   };
 }
 
+// اصلاح شده: بستن صحیح forEach مربوط به دکمه‌های فیلتر
 document.querySelectorAll(".filter-tab").forEach((t) => {
   t.onclick = () => {
-    document.querySelectorAll(".filter-tab").forEach((x) => x.classList.remove("active"));
+    document
+      .querySelectorAll(".filter-tab")
+      .forEach((x) => x.classList.remove("active"));
+
     t.classList.add("active");
     currentFilter = t.dataset.filter;
+
     loadConversations();
   };
-}
+});
 
 // ═══════════════════════════════════════════════════════════════
 // Conversations
@@ -470,42 +677,74 @@ document.querySelectorAll(".filter-tab").forEach((t) => {
 async function loadConversations() {
   try {
     const params = new URLSearchParams();
-    if (currentFilter === "archived") params.set("archived", "true");
-    if (currentFilter === "favorite") params.set("favorite", "true");
-    if (currentSearch) params.set("q", currentSearch);
 
-    const list = await fetch("/api/chat/conversations?" + params.toString()).then((r) => r.json());
+    if (currentFilter === "archived") {
+      params.set("archived", "true");
+    }
+
+    if (currentFilter === "favorite") {
+      params.set("favorite", "true");
+    }
+
+    if (currentSearch) {
+      params.set("q", currentSearch);
+    }
+
+    const list = await fetch(
+      "/api/chat/conversations?" + params.toString()
+    ).then((r) => {
+      if (!r.ok) throw new Error("گرفتن گفتگوها ناموفق بود.");
+      return r.json();
+    });
+
     const el = $("convList");
+    if (!el) return;
+
     el.innerHTML = "";
 
     let filtered = list;
-    if (currentFilter === "pinned") filtered = list.filter((c) => c.pinned);
+
+    if (currentFilter === "pinned") {
+      filtered = list.filter((c) => c.pinned);
+    }
 
     if (!filtered.length) {
-      el.innerHTML = `<div style="padding:20px;text-align:center;font-size:12px;color:var(--fg2)">گفتگویی یافت نشد</div>`;
+      el.innerHTML = `
+        <div style="padding:20px;text-align:center;font-size:12px;color:var(--fg2)">
+          گفتگویی یافت نشد
+        </div>
+      `;
       return;
     }
 
     filtered.forEach((c) => {
       const d = document.createElement("div");
-      d.className = "conv-item" + (c.id === currentConvId ? " active" : "");
+
+      d.className =
+        "conv-item" + (c.id === currentConvId ? " active" : "");
+
       const icons = [];
+
       if (c.pinned) icons.push("📌");
       if (c.favorite) icons.push("⭐");
       if (c.archived) icons.push("🗄️");
+
       d.innerHTML = `
         ${icons.length ? `<span class="conv-icons">${icons.join("")}</span>` : ""}
         <span class="conv-title">${escapeHtml(c.title)}</span>
         <button class="del" title="حذف">✕</button>
       `;
+
       d.onclick = (e) => {
         if (e.target.classList.contains("del")) {
           e.stopPropagation();
           deleteConv(c.id);
           return;
         }
+
         openConversation(c.id);
       };
+
       el.appendChild(d);
     });
   } catch (e) {
@@ -515,32 +754,53 @@ async function loadConversations() {
 
 async function deleteConv(id) {
   if (!confirm("مطمئنی می‌خوای این گفتگو رو حذف کنی؟")) return;
-  await fetch(`/api/chat/conversations/${id}`, { method: "DELETE" });
+
+  await fetch(`/api/chat/conversations/${id}`, {
+    method: "DELETE",
+  });
+
   if (id === currentConvId) {
     currentConvId = null;
     currentConvMeta = null;
-    $("chat").innerHTML = "";
+
+    if ($("chat")) $("chat").innerHTML = "";
+
     showWelcomeScreen();
     updateChatHeader();
   }
+
   loadConversations();
   toast("🗑️ گفتگو حذف شد", "success");
 }
 
 async function openConversation(id) {
   currentConvId = id;
+
   try {
     const convs = await fetch("/api/chat/conversations").then((r) => r.json());
+
     currentConvMeta = convs.find((c) => c.id === id);
-    const msgs = await fetch(`/api/chat/conversations/${id}/messages`).then((r) => r.json());
+
+    const msgs = await fetch(
+      `/api/chat/conversations/${id}/messages`
+    ).then((r) => r.json());
+
+    if (!$("chat")) return;
+
     $("chat").innerHTML = "";
+
     if (!msgs.length) {
       showWelcomeScreen();
     } else {
       msgs.forEach((m) => {
-        addMessage(m.role, m.content, { id: m.id, edited: m.edited, bookmarked: m.bookmarked });
+        addMessage(m.role, m.content, {
+          id: m.id,
+          edited: m.edited,
+          bookmarked: m.bookmarked,
+        });
       });
     }
+
     updateChatHeader();
     loadConversations();
     closeSidebar();
@@ -553,7 +813,9 @@ if ($("newChat")) {
   $("newChat").onclick = () => {
     currentConvId = null;
     currentConvMeta = null;
-    $("chat").innerHTML = "";
+
+    if ($("chat")) $("chat").innerHTML = "";
+
     showWelcomeScreen();
     updateChatHeader();
     loadConversations();
@@ -561,11 +823,16 @@ if ($("newChat")) {
 }
 
 function showWelcomeScreen() {
-  $("chat").innerHTML = `
+  const chat = $("chat");
+  if (!chat) return;
+
+  chat.innerHTML = `
     <div class="welcome-screen" id="welcomeScreen">
       <div class="welcome-icon">🧠</div>
       <h2 class="welcome-title">به AI Workspace خوش آمدی!</h2>
-      <p class="welcome-subtitle">دستیار هوشمند با قابلیت Agent Loop، حافظه‌ی بلندمدت و پشتیبانی از چند Provider</p>
+      <p class="welcome-subtitle">
+        دستیار هوشمند با قابلیت Agent Loop، حافظه‌ی بلندمدت و پشتیبانی از چند Provider
+      </p>
       <div class="welcome-features">
         <div class="welcome-card" data-prompt="یک کد Python برای مرتب‌سازی سریع بنویس">
           <div class="welcome-card-icon">💻</div>
@@ -593,27 +860,55 @@ function showWelcomeScreen() {
       </div>
     </div>
   `;
+
   document.querySelectorAll(".welcome-card").forEach((card) => {
     card.onclick = () => {
-      $("input").value = card.dataset.prompt || "";
-      autoResize();
-      $("input").focus();
+      if ($("input")) {
+        $("input").value = card.dataset.prompt || "";
+        autoResize();
+        $("input").focus();
+      }
     };
   });
 }
 
 function updateChatHeader() {
   if (currentConvId && currentConvMeta) {
-    $("chatTitle").textContent = currentConvMeta.title;
-    if ($("chatSubtitle")) $("chatSubtitle").textContent = "📌 فعال";
-    if ($("chatActions")) $("chatActions").style.display = "flex";
-    if ($("pinChat")) $("pinChat").classList.toggle("active", currentConvMeta.pinned);
-    if ($("favChat")) $("favChat").classList.toggle("active", currentConvMeta.favorite);
-    if ($("archiveChat")) $("archiveChat").classList.toggle("active", currentConvMeta.archived);
+    if ($("chatTitle")) {
+      $("chatTitle").textContent = currentConvMeta.title;
+    }
+
+    if ($("chatSubtitle")) {
+      $("chatSubtitle").textContent = "📌 فعال";
+    }
+
+    if ($("chatActions")) {
+      $("chatActions").style.display = "flex";
+    }
+
+    if ($("pinChat")) {
+      $("pinChat").classList.toggle("active", currentConvMeta.pinned);
+    }
+
+    if ($("favChat")) {
+      $("favChat").classList.toggle("active", currentConvMeta.favorite);
+    }
+
+    if ($("archiveChat")) {
+      $("archiveChat").classList.toggle("active", currentConvMeta.archived);
+    }
   } else {
-    $("chatTitle").textContent = "🧠 AI Workspace";
-    if ($("chatSubtitle")) $("chatSubtitle").textContent = "شروع کن...";
-    if ($("chatActions")) $("chatActions").style.display = "none";
+    if ($("chatTitle")) {
+      $("chatTitle").textContent = "🧠 AI Workspace";
+    }
+
+    if ($("chatSubtitle")) {
+      $("chatSubtitle").textContent = "شروع کن...";
+    }
+
+    if ($("chatActions")) {
+      $("chatActions").style.display = "none";
+    }
   }
 }
 
@@ -622,11 +917,13 @@ function updateChatHeader() {
 // ═══════════════════════════════════════════════════════════════
 async function patchConversation(data) {
   if (!currentConvId) return;
+
   const r = await fetch(`/api/chat/conversations/${currentConvId}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
+
   if (r.ok) {
     currentConvMeta = await r.json();
     updateChatHeader();
@@ -634,23 +931,47 @@ async function patchConversation(data) {
   }
 }
 
-if ($("pinChat")) $("pinChat").onclick = () => currentConvMeta && patchConversation({ pinned: !currentConvMeta.pinned });
-if ($("favChat")) $("favChat").onclick = () => currentConvMeta && patchConversation({ favorite: !currentConvMeta.favorite });
-if ($("archiveChat")) $("archiveChat").onclick = () => currentConvMeta && patchConversation({ archived: !currentConvMeta.archived });
+if ($("pinChat")) {
+  $("pinChat").onclick = () =>
+    currentConvMeta &&
+    patchConversation({ pinned: !currentConvMeta.pinned });
+}
+
+if ($("favChat")) {
+  $("favChat").onclick = () =>
+    currentConvMeta &&
+    patchConversation({ favorite: !currentConvMeta.favorite });
+}
+
+if ($("archiveChat")) {
+  $("archiveChat").onclick = () =>
+    currentConvMeta &&
+    patchConversation({ archived: !currentConvMeta.archived });
+}
 
 if ($("renameChat")) {
   $("renameChat").onclick = () => {
     if (!currentConvMeta) return;
+
     const newTitle = prompt("نام جدید:", currentConvMeta.title);
-    if (newTitle && newTitle.trim()) patchConversation({ title: newTitle.trim() });
+
+    if (newTitle && newTitle.trim()) {
+      patchConversation({ title: newTitle.trim() });
+    }
   };
 }
 
 if ($("autoNameChat")) {
   $("autoNameChat").onclick = async () => {
     if (!currentConvId) return;
+
     toast("⏳ در حال تولید نام...");
-    const r = await fetch(`/api/chat/conversations/${currentConvId}/auto-name`, { method: "POST" });
+
+    const r = await fetch(
+      `/api/chat/conversations/${currentConvId}/auto-name`,
+      { method: "POST" }
+    );
+
     if (r.ok) {
       currentConvMeta = await r.json();
       updateChatHeader();
@@ -663,7 +984,12 @@ if ($("autoNameChat")) {
 if ($("duplicateChat")) {
   $("duplicateChat").onclick = async () => {
     if (!currentConvId) return;
-    const r = await fetch(`/api/chat/conversations/${currentConvId}/duplicate`, { method: "POST" });
+
+    const r = await fetch(
+      `/api/chat/conversations/${currentConvId}/duplicate`,
+      { method: "POST" }
+    );
+
     if (r.ok) {
       loadConversations();
       toast("📋 کپی شد", "success");
@@ -674,6 +1000,7 @@ if ($("duplicateChat")) {
 if ($("tagChat")) {
   $("tagChat").onclick = () => {
     if (!currentConvMeta) return;
+
     $("tagInput").value = currentConvMeta.tags || "";
     renderTagSuggestions();
     $("tagModal").classList.add("open");
@@ -683,28 +1010,53 @@ if ($("tagChat")) {
 function renderTagSuggestions() {
   const el = $("tagSuggestions");
   if (!el) return;
-  const suggestions = ["کد", "پروژه", "ایده", "مهم", "شخصی", "کار", "تحقیق"];
+
+  const suggestions = [
+    "کد",
+    "پروژه",
+    "ایده",
+    "مهم",
+    "شخصی",
+    "کار",
+    "تحقیق",
+  ];
+
   el.innerHTML = "";
+
   suggestions.forEach((s) => {
     const b = document.createElement("button");
     b.className = "tag-suggestion";
     b.textContent = s;
+
     b.onclick = () => {
       const cur = $("tagInput").value.trim();
-      const tags = cur ? cur.split(",").map((x) => x.trim()) : [];
+      const tags = cur
+        ? cur.split(",").map((x) => x.trim())
+        : [];
+
       if (!tags.includes(s)) tags.push(s);
+
       $("tagInput").value = tags.join(", ");
     };
+
     el.appendChild(b);
   });
 }
 
-if ($("closeTag")) $("closeTag").onclick = () => $("tagModal").classList.remove("open");
-if ($("closeTagBtn")) $("closeTagBtn").onclick = () => $("tagModal").classList.remove("open");
+if ($("closeTag")) {
+  $("closeTag").onclick = () => $("tagModal").classList.remove("open");
+}
+
+if ($("closeTagBtn")) {
+  $("closeTagBtn").onclick = () => $("tagModal").classList.remove("open");
+}
+
 if ($("saveTag")) {
   $("saveTag").onclick = async () => {
     const tags = $("tagInput").value.trim();
+
     await patchConversation({ tags });
+
     $("tagModal").classList.remove("open");
     toast("✅ ذخیره شد", "success");
   };
@@ -713,19 +1065,29 @@ if ($("saveTag")) {
 if ($("exportChat")) {
   $("exportChat").onclick = () => {
     if (!currentConvId) return;
+
     const fmt = prompt("فرمت (md/json/txt):", "md");
+
     if (fmt && ["md", "json", "txt"].includes(fmt)) {
-      window.open(`/api/chat/conversations/${currentConvId}/export?fmt=${fmt}`);
+      window.open(
+        `/api/chat/conversations/${currentConvId}/export?fmt=${fmt}`
+      );
     }
   };
 }
 
-if ($("deleteChat")) $("deleteChat").onclick = () => currentConvId && deleteConv(currentConvId);
+if ($("deleteChat")) {
+  $("deleteChat").onclick = () => {
+    if (currentConvId) deleteConv(currentConvId);
+  };
+}
 
 if ($("exportAllBtn")) {
   $("exportAllBtn").onclick = async () => {
     toast("📦 در حال آماده‌سازی بکاپ...");
+
     const list = await fetch("/api/chat/conversations").then((r) => r.json());
+
     for (const c of list) {
       window.open(`/api/chat/conversations/${c.id}/export?fmt=md`);
       await new Promise((r) => setTimeout(r, 500));
@@ -739,15 +1101,19 @@ if ($("exportAllBtn")) {
 function addMessage(role, text, meta = {}, streaming = false) {
   const group = document.createElement("div");
   group.className = "msg-group";
+
   if (meta.id) group.dataset.msgId = meta.id;
 
   const bubble = document.createElement("div");
-  bubble.className = "msg " + role + (streaming ? " streaming-cursor" : "");
+  bubble.className =
+    "msg " + role + (streaming ? " streaming-cursor" : "");
+
   if (meta.edited) bubble.classList.add("edited");
   if (meta.bookmarked) bubble.classList.add("bookmarked");
 
   const content = document.createElement("div");
   renderMarkdown(text, content);
+
   bubble.appendChild(content);
   group.appendChild(bubble);
 
@@ -757,10 +1123,12 @@ function addMessage(role, text, meta = {}, streaming = false) {
   const copyBtn = document.createElement("button");
   copyBtn.className = "msg-action";
   copyBtn.innerHTML = "📋 کپی";
+
   copyBtn.onclick = () => {
     navigator.clipboard.writeText(text);
     toast("✅ کپی شد", "success");
   };
+
   actions.appendChild(copyBtn);
 
   if (role === "user" && meta.id) {
@@ -791,38 +1159,58 @@ function addMessage(role, text, meta = {}, streaming = false) {
     actions.appendChild(contBtn);
 
     const bmBtn = document.createElement("button");
-    bmBtn.className = "msg-action" + (meta.bookmarked ? " active" : "");
+
+    bmBtn.className =
+      "msg-action" + (meta.bookmarked ? " active" : "");
+
     bmBtn.innerHTML = "🔖";
+
     bmBtn.onclick = async () => {
-      const r = await fetch(`/api/chat/messages/${meta.id}/bookmark`, { method: "POST" });
+      const r = await fetch(
+        `/api/chat/messages/${meta.id}/bookmark`,
+        { method: "POST" }
+      );
+
       if (r.ok) {
         const d = await r.json();
+
         bmBtn.classList.toggle("active", d.bookmarked);
         bubble.classList.toggle("bookmarked", d.bookmarked);
       }
     };
+
     actions.appendChild(bmBtn);
   }
 
   group.appendChild(actions);
-  $("chat").appendChild(group);
-  $("chat").scrollTop = $("chat").scrollHeight;
+
+  if ($("chat")) {
+    $("chat").appendChild(group);
+    $("chat").scrollTop = $("chat").scrollHeight;
+  }
+
   return { group, bubble, content };
 }
 
 function updateMessageContent(contentEl, text) {
   renderMarkdown(text, contentEl);
-  $("chat").scrollTop = $("chat").scrollHeight;
+
+  if ($("chat")) {
+    $("chat").scrollTop = $("chat").scrollHeight;
+  }
 }
 
 async function editMessage(mid, oldText, contentEl) {
   const newText = prompt("ویرایش پیام:", oldText);
+
   if (!newText || newText === oldText) return;
+
   const r = await fetch(`/api/chat/messages/${mid}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ content: newText }),
   });
+
   if (r.ok) {
     updateMessageContent(contentEl, newText);
     toast("✅ ویرایش شد", "success");
@@ -831,7 +1219,11 @@ async function editMessage(mid, oldText, contentEl) {
 
 async function deleteMessage(mid, groupEl) {
   if (!confirm("پیام حذف شود؟")) return;
-  const r = await fetch(`/api/chat/messages/${mid}`, { method: "DELETE" });
+
+  const r = await fetch(`/api/chat/messages/${mid}`, {
+    method: "DELETE",
+  });
+
   if (r.ok) {
     groupEl.remove();
     toast("🗑️ حذف شد", "success");
@@ -840,8 +1232,14 @@ async function deleteMessage(mid, groupEl) {
 
 async function regenerateMessage(mid) {
   if (!confirm("پاسخ دوباره تولید شود؟")) return;
+
   toast("⏳ در حال تولید...");
-  const r = await fetch(`/api/chat/messages/${mid}/regenerate`, { method: "POST" });
+
+  const r = await fetch(
+    `/api/chat/messages/${mid}/regenerate`,
+    { method: "POST" }
+  );
+
   if (r.ok) {
     if (currentConvId) openConversation(currentConvId);
     toast("✅ تولید شد", "success");
@@ -850,10 +1248,20 @@ async function regenerateMessage(mid) {
 
 async function continueMessage(mid, oldText, contentEl) {
   toast("⏳ در حال ادامه...");
-  const r = await fetch(`/api/chat/messages/${mid}/continue`, { method: "POST" });
+
+  const r = await fetch(
+    `/api/chat/messages/${mid}/continue`,
+    { method: "POST" }
+  );
+
   if (r.ok) {
     const data = await r.json();
-    updateMessageContent(contentEl, oldText + "\n\n" + data.reply);
+
+    updateMessageContent(
+      contentEl,
+      oldText + "\n\n" + data.reply
+    );
+
     toast("✅ ادامه داده شد", "success");
   }
 }
@@ -862,38 +1270,66 @@ async function continueMessage(mid, oldText, contentEl) {
 // Send
 // ═══════════════════════════════════════════════════════════════
 async function send() {
+  if (!$("input") || !$("sendBtn") || !$("stopBtn")) return;
+
   const text = $("input").value.trim();
+
   if (!text && attachedFiles.length === 0) return;
   if (abortController) return;
 
   const ws = $("welcomeScreen");
   if (ws) ws.remove();
 
-  addMessage("user", text + (attachedFiles.length ? `\n📎 ${attachedFiles.length} فایل` : ""));
+  addMessage(
+    "user",
+    text + (attachedFiles.length ? `\n📎 ${attachedFiles.length} فایل` : "")
+  );
+
   $("input").value = "";
   autoResize();
-  if ($("clearInput")) $("clearInput").style.display = "none";
+
+  if ($("clearInput")) {
+    $("clearInput").style.display = "none";
+  }
 
   const sendBtn = $("sendBtn");
   const stopBtn = $("stopBtn");
+
   sendBtn.disabled = true;
   sendBtn.style.display = "none";
   stopBtn.style.display = "flex";
-  $("status").classList.add("busy");
-  if ($("statusText")) $("statusText").textContent = "در حال فکر کردن...";
 
-  const steps = ["🧠 تحلیل درخواست", "📋 ساخت Plan", "🛠️ اجرای ابزار", "✅ تولید پاسخ"];
+  if ($("status")) $("status").classList.add("busy");
+
+  if ($("statusText")) {
+    $("statusText").textContent = "در حال فکر کردن...";
+  }
+
+  const steps = [
+    "🧠 تحلیل درخواست",
+    "📋 ساخت Plan",
+    "🛠️ اجرای ابزار",
+    "✅ تولید پاسخ",
+  ];
+
   renderAgentSteps(steps.slice(0, 1));
+
   let stepIdx = 1;
+
   const stepTimer = setInterval(() => {
-    if (stepIdx < steps.length) renderAgentSteps(steps.slice(0, ++stepIdx));
+    if (stepIdx < steps.length) {
+      renderAgentSteps(steps.slice(0, ++stepIdx));
+    }
   }, 700);
 
   abortController = new AbortController();
 
   try {
     const useStream = userSettings?.streaming !== false;
-    const endpoint = useStream ? "/api/chat/stream" : "/api/chat/send";
+
+    const endpoint = useStream
+      ? "/api/chat/stream"
+      : "/api/chat/send";
 
     if (useStream) {
       const msgObj = addMessage("assistant", "", {}, true);
@@ -910,38 +1346,64 @@ async function send() {
         signal: abortController.signal,
       });
 
+      if (!resp.ok) {
+        const errData = await resp.json().catch(() => ({}));
+        throw new Error(
+          errData.detail || "ارسال پیام به سرور ناموفق بود."
+        );
+      }
+
+      if (!resp.body) {
+        throw new Error("پاسخ جریانی سرور در دسترس نیست.");
+      }
+
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
 
       while (true) {
         const { done, value } = await reader.read();
+
         if (done) break;
+
         buffer += decoder.decode(value, { stream: true });
+
         const lines = buffer.split("\n\n");
         buffer = lines.pop();
+
         for (const line of lines) {
           if (!line.startsWith("data: ")) continue;
+
           try {
             const data = JSON.parse(line.slice(6));
+
             if (data.delta) {
               fullText += data.delta;
               updateMessageContent(msgObj.content, fullText);
             }
+
             if (data.done) {
               currentConvId = data.conversation_id;
+
               msgObj.bubble.classList.remove("streaming-cursor");
+
               speak(fullText);
               notify("پاسخ آماده شد", fullText.slice(0, 80));
+
               setTimeout(() => {
-                if (currentConvId) openConversation(currentConvId);
+                if (currentConvId) {
+                  openConversation(currentConvId);
+                }
               }, 300);
             }
+
             if (data.error) {
               fullText += "\n\n❌ " + data.error;
               updateMessageContent(msgObj.content, fullText);
             }
-          } catch {}
+          } catch (e) {
+            console.error("Stream parse error:", e);
+          }
         }
       }
     } else {
@@ -955,13 +1417,24 @@ async function send() {
         }),
         signal: abortController.signal,
       });
+
       const data = await r.json();
+
+      if (!r.ok) {
+        throw new Error(data.detail || "ارسال پیام ناموفق بود.");
+      }
+
       currentConvId = data.conversation_id;
+
       addMessage("assistant", data.reply);
+
       speak(data.reply);
       notify("پاسخ آماده شد", data.reply.slice(0, 80));
+
       setTimeout(() => {
-        if (currentConvId) openConversation(currentConvId);
+        if (currentConvId) {
+          openConversation(currentConvId);
+        }
       }, 300);
     }
 
@@ -971,30 +1444,51 @@ async function send() {
     if (e.name === "AbortError") {
       toast("⏹️ متوقف شد", "warning");
     } else {
+      console.error("send error:", e);
       addMessage("assistant", "❌ خطا: " + e.message);
     }
   } finally {
     clearInterval(stepTimer);
+
     renderAgentSteps([...steps, "✅ کار تکمیل شد"]);
+
     sendBtn.disabled = false;
     sendBtn.style.display = "flex";
     stopBtn.style.display = "none";
-    $("status").classList.remove("busy");
-    if ($("statusText")) $("statusText").textContent = "آماده";
+
+    if ($("status")) {
+      $("status").classList.remove("busy");
+    }
+
+    if ($("statusText")) {
+      $("statusText").textContent = "آماده";
+    }
+
     abortController = null;
   }
 }
 
-if ($("stopBtn")) $("stopBtn").onclick = () => { if (abortController) abortController.abort(); };
+if ($("stopBtn")) {
+  $("stopBtn").onclick = () => {
+    if (abortController) abortController.abort();
+  };
+}
 
 function renderAgentSteps(steps) {
   if (!userSettings?.show_agent_timeline) return;
+
   const el = $("agentSteps");
   if (!el) return;
-  el.innerHTML = steps.map((s) => `<div class="step">${s}</div>`).join("");
+
+  el.innerHTML = steps
+    .map((s) => `<div class="step">${s}</div>`)
+    .join("");
 }
 
-if ($("sendBtn")) $("sendBtn").onclick = send;
+if ($("sendBtn")) {
+  $("sendBtn").onclick = send;
+}
+
 if ($("input")) {
   $("input").addEventListener("keydown", (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -1002,58 +1496,96 @@ if ($("input")) {
       send();
     }
   });
+
   $("input").addEventListener("input", () => {
     autoResize();
-    if ($("clearInput")) $("clearInput").style.display = $("input").value ? "block" : "none";
+
+    if ($("clearInput")) {
+      $("clearInput").style.display =
+        $("input").value ? "block" : "none";
+    }
+
     if ($("charCount")) {
       const n = $("input").value.length;
-      $("charCount").textContent = `${n.toLocaleString("fa-IR")} کاراکتر`;
+
+      $("charCount").textContent =
+        `${n.toLocaleString("fa-IR")} کاراکتر`;
     }
   });
 }
 
 function autoResize() {
   const t = $("input");
+  if (!t) return;
+
   t.style.height = "auto";
   t.style.height = Math.min(t.scrollHeight, 200) + "px";
 }
 
 if ($("clearInput")) {
   $("clearInput").onclick = () => {
+    if (!$("input")) return;
+
     $("input").value = "";
     autoResize();
+
     $("clearInput").style.display = "none";
-    if ($("charCount")) $("charCount").textContent = "۰ کاراکتر";
+
+    if ($("charCount")) {
+      $("charCount").textContent = "۰ کاراکتر";
+    }
   };
 }
 
 if ($("clearAgentTimeline")) {
   $("clearAgentTimeline").onclick = () => {
-    $("agentSteps").innerHTML = '<div class="step">آماده برای شروع</div>';
+    if ($("agentSteps")) {
+      $("agentSteps").innerHTML =
+        '<div class="step">آماده برای شروع</div>';
+    }
   };
 }
 
 // ═══════════════════════════════════════════════════════════════
 // Files
 // ═══════════════════════════════════════════════════════════════
-if ($("fileBtn")) $("fileBtn").onclick = () => $("fileInput").click();
+if ($("fileBtn")) {
+  $("fileBtn").onclick = () => {
+    if ($("fileInput")) $("fileInput").click();
+  };
+}
+
 if ($("fileInput")) {
   $("fileInput").onchange = async (e) => {
     for (const f of e.target.files) {
       const fd = new FormData();
       fd.append("file", f);
+
       try {
         toast("⏳ در حال آپلود " + f.name);
-        const r = await fetch("/api/files/upload", { method: "POST", body: fd });
+
+        const r = await fetch("/api/files/upload", {
+          method: "POST",
+          body: fd,
+        });
+
         const data = await r.json();
-        if (data.id) {
+
+        if (r.ok && data.id) {
           attachedFiles.push(data);
           toast("✅ آپلود شد: " + f.name, "success");
+        } else {
+          toast(
+            "❌ " + (data.detail || "آپلود ناموفق بود"),
+            "error"
+          );
         }
       } catch (err) {
+        console.error("Upload error:", err);
         toast("❌ خطا در آپلود", "error");
       }
     }
+
     e.target.value = "";
     renderAttached();
   };
@@ -1061,15 +1593,24 @@ if ($("fileInput")) {
 
 function renderAttached() {
   const el = $("attached");
+  if (!el) return;
+
   el.innerHTML = "";
+
   attachedFiles.forEach((f, i) => {
     const c = document.createElement("div");
     c.className = "chip";
-    c.innerHTML = `📎 ${escapeHtml(f.filename)} <button data-i="${i}">✕</button>`;
+
+    c.innerHTML = `
+      📎 ${escapeHtml(f.filename)}
+      <button data-i="${i}">✕</button>
+    `;
+
     c.querySelector("button").onclick = () => {
       attachedFiles.splice(i, 1);
       renderAttached();
     };
+
     el.appendChild(c);
   });
 }
@@ -1077,19 +1618,33 @@ function renderAttached() {
 // ═══════════════════════════════════════════════════════════════
 // Voice
 // ═══════════════════════════════════════════════════════════════
-const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+const SR =
+  window.SpeechRecognition ||
+  window.webkitSpeechRecognition;
+
 if (SR) {
   recognition = new SR();
+
   recognition.continuous = false;
   recognition.interimResults = true;
+
   recognition.onresult = (e) => {
     let txt = "";
-    for (let i = e.resultIndex; i < e.results.length; i++) txt += e.results[i][0].transcript;
-    $("input").value = txt;
-    autoResize();
+
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      txt += e.results[i][0].transcript;
+    }
+
+    if ($("input")) {
+      $("input").value = txt;
+      autoResize();
+    }
   };
+
   recognition.onend = () => {
-    if ($("micBtn")) $("micBtn").classList.remove("recording");
+    if ($("micBtn")) {
+      $("micBtn").classList.remove("recording");
+    }
   };
 }
 
@@ -1099,7 +1654,9 @@ if ($("micBtn")) {
       alert("مرورگر پشتیبانی نمی‌کند. از Chrome استفاده کن.");
       return;
     }
+
     recognition.lang = userSettings?.voice_lang || "fa-IR";
+
     if ($("micBtn").classList.contains("recording")) {
       recognition.stop();
     } else {
@@ -1112,11 +1669,17 @@ if ($("micBtn")) {
 function speak(text) {
   if (!window.speechSynthesis) return;
   if (userSettings && !userSettings.voice_enabled) return;
-  const clean = text.replace(/```[\s\S]*?```/g, " (کد) ").slice(0, 500);
+
+  const clean = text
+    .replace(/```[\s\S]*?```/g, " (کد) ")
+    .slice(0, 500);
+
   const u = new SpeechSynthesisUtterance(clean);
+
   u.lang = userSettings?.voice_lang || "fa-IR";
   u.rate = userSettings?.voice_rate || 1.0;
   u.pitch = userSettings?.voice_pitch || 1.0;
+
   window.speechSynthesis.cancel();
   window.speechSynthesis.speak(u);
 }
@@ -1124,8 +1687,15 @@ function speak(text) {
 async function notify(title, body) {
   if (!userSettings?.notifications) return;
   if (!("Notification" in window)) return;
-  if (Notification.permission === "default") await Notification.requestPermission();
-  if (Notification.permission === "granted" && document.hidden) {
+
+  if (Notification.permission === "default") {
+    await Notification.requestPermission();
+  }
+
+  if (
+    Notification.permission === "granted" &&
+    document.hidden
+  ) {
     new Notification(title, { body });
   }
 }
@@ -1136,10 +1706,16 @@ async function notify(title, body) {
 if ($("openSettings")) {
   $("openSettings").onclick = async () => {
     try {
-      userSettings = await fetch("/api/settings/user").then((r) => r.json());
+      userSettings = await fetch("/api/settings/user").then((r) =>
+        r.json()
+      );
+
       loadSettingsToUI(userSettings);
       renderThemeGrid();
-      $("settingsModal").classList.add("open");
+
+      if ($("settingsModal")) {
+        $("settingsModal").classList.add("open");
+      }
     } catch (e) {
       alert("خطا: " + e.message);
     }
@@ -1148,54 +1724,110 @@ if ($("openSettings")) {
 
 function loadSettingsToUI(s) {
   if (!s) return;
-  const set = (id, val) => { const el = $(id); if (el) el.value = val; };
-  const setChk = (id, val) => { const el = $(id); if (el) el.checked = val; };
-  const setTxt = (id, val) => { const el = $(id); if (el) el.textContent = val; };
 
-  set("setFontSize", s.font_size); setTxt("fontSizeVal", s.font_size);
+  const set = (id, val) => {
+    const el = $(id);
+    if (el) el.value = val;
+  };
+
+  const setChk = (id, val) => {
+    const el = $(id);
+    if (el) el.checked = val;
+  };
+
+  const setTxt = (id, val) => {
+    const el = $(id);
+    if (el) el.textContent = val;
+  };
+
+  set("setFontSize", s.font_size);
+  setTxt("fontSizeVal", s.font_size);
+
   setChk("setCompact", s.compact_mode);
   set("setProvider", s.provider);
   set("setModel", s.model);
-  set("setTemp", s.temperature); setTxt("tempVal", s.temperature);
+
+  set("setTemp", s.temperature);
+  setTxt("tempVal", s.temperature);
+
   set("setMaxTokens", s.max_tokens);
   set("setSysPrompt", s.system_prompt || "");
+
   setChk("setVoiceEnabled", s.voice_enabled);
   set("setVoiceLang", s.voice_lang);
-  set("setVoiceRate", s.voice_rate); setTxt("voiceRateVal", s.voice_rate);
-  set("setVoicePitch", s.voice_pitch); setTxt("voicePitchVal", s.voice_pitch);
-  set("setContext", s.context_messages); setTxt("ctxVal", s.context_messages);
+
+  set("setVoiceRate", s.voice_rate);
+  setTxt("voiceRateVal", s.voice_rate);
+
+  set("setVoicePitch", s.voice_pitch);
+  setTxt("voicePitchVal", s.voice_pitch);
+
+  set("setContext", s.context_messages);
+  setTxt("ctxVal", s.context_messages);
+
   setChk("setAutoSum", s.auto_summarize);
   setChk("setStreaming", s.streaming);
   setChk("setNotifications", s.notifications);
   setChk("setTimeline", s.show_agent_timeline);
 }
 
-["setFontSize", "setTemp", "setVoiceRate", "setVoicePitch", "setContext"].forEach((id) => {
+[
+  "setFontSize",
+  "setTemp",
+  "setVoiceRate",
+  "setVoicePitch",
+  "setContext",
+].forEach((id) => {
   const el = $(id);
   if (!el) return;
+
   el.oninput = () => {
-    const map = { setFontSize: "fontSizeVal", setTemp: "tempVal", setVoiceRate: "voiceRateVal", setVoicePitch: "voicePitchVal", setContext: "ctxVal" };
+    const map = {
+      setFontSize: "fontSizeVal",
+      setTemp: "tempVal",
+      setVoiceRate: "voiceRateVal",
+      setVoicePitch: "voicePitchVal",
+      setContext: "ctxVal",
+    };
+
     const target = $(map[id]);
-    if (target) target.textContent = el.value;
+
+    if (target) {
+      target.textContent = el.value;
+    }
   };
 });
 
 document.querySelectorAll("#settingsTabs .tab").forEach((t) => {
   t.onclick = () => {
-    document.querySelectorAll("#settingsTabs .tab").forEach((x) => x.classList.remove("active"));
-    document.querySelectorAll("#settingsModal .tab-content").forEach((x) => x.classList.remove("active"));
+    document
+      .querySelectorAll("#settingsTabs .tab")
+      .forEach((x) => x.classList.remove("active"));
+
+    document
+      .querySelectorAll("#settingsModal .tab-content")
+      .forEach((x) => x.classList.remove("active"));
+
     t.classList.add("active");
-    const target = document.querySelector(`#settingsModal .tab-content[data-tab="${t.dataset.tab}"]`);
+
+    const target = document.querySelector(
+      `#settingsModal .tab-content[data-tab="${t.dataset.tab}"]`
+    );
+
     if (target) target.classList.add("active");
   };
 });
 
 if ($("testVoice")) {
   $("testVoice").onclick = () => {
-    const u = new SpeechSynthesisUtterance("سلام، این یک تست صدا است.");
+    const u = new SpeechSynthesisUtterance(
+      "سلام، این یک تست صدا است."
+    );
+
     u.lang = $("setVoiceLang").value;
     u.rate = parseFloat($("setVoiceRate").value);
     u.pitch = parseFloat($("setVoicePitch").value);
+
     window.speechSynthesis.cancel();
     window.speechSynthesis.speak(u);
   };
@@ -1221,505 +1853,33 @@ if ($("saveSettings")) {
       notifications: $("setNotifications").checked,
       show_agent_timeline: $("setTimeline").checked,
     };
+
     const r = await fetch("/api/settings/user", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
+
     userSettings = await r.json();
     applyUserSettings(userSettings);
+
     $("settingsModal").classList.remove("open");
     toast("✅ ذخیره شد", "success");
   };
 }
 
-if ($("closeSettings")) $("closeSettings").onclick = () => $("settingsModal").classList.remove("open");
-if ($("closeSettingsBtn")) $("closeSettingsBtn").onclick = () => $("settingsModal").classList.remove("open");
+if ($("closeSettings")) {
+  $("closeSettings").onclick = () =>
+    $("settingsModal").classList.remove("open");
+}
+
+if ($("closeSettingsBtn")) {
+  $("closeSettingsBtn").onclick = () =>
+    $("settingsModal").classList.remove("open");
+}
 
 if ($("clearAllChats")) {
   $("clearAllChats").onclick = async () => {
-    if (!confirm("همه‌ی گفتگوها حذف شوند؟ این کار برگشت‌پذیر نیست!")) return;
-    const list = await fetch("/api/chat/conversations").then((r) => r.json());
-    for (const c of list) {
-      await fetch(`/api/chat/conversations/${c.id}`, { method: "DELETE" });
-    }
-    $("chat").innerHTML = "";
-    currentConvId = null;
-    showWelcomeScreen();
-    loadConversations();
-    toast("🗑️ همه حذف شد", "success");
-  };
-}
-
-// ═══════════════════════════════════════════════════════════════
-// Memory Manager
-// ═══════════════════════════════════════════════════════════════
-if ($("openMemoryManager")) {
-  $("openMemoryManager").onclick = () => {
-    loadMemories();
-    $("memoryModal").classList.add("open");
-  };
-}
-if ($("closeMemory")) $("closeMemory").onclick = () => $("memoryModal").classList.remove("open");
-if ($("closeMemoryBtn")) $("closeMemoryBtn").onclick = () => $("memoryModal").classList.remove("open");
-if ($("addMemory")) {
-  $("addMemory").onclick = async () => {
-    const key = $("memKey").value.trim();
-    const value = $("memValue").value.trim();
-    if (!key || !value) return;
-    await fetch("/api/memory/", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ key, value, category: "general", importance: 5 }),
-    });
-    $("memKey").value = "";
-    $("memValue").value = "";
-    loadMemories();
-    toast("✅ اضافه شد", "success");
-  };
-}
-
-async function loadMemories() {
-  try {
-    const list = await fetch("/api/memory/").then((r) => r.json());
-    const el = $("memoryList");
-    el.innerHTML = "";
-    if (!list.length) {
-      el.innerHTML = '<p style="color:var(--fg2);font-size:13px;text-align:center;padding:14px">حافظه‌ای ثبت نشده</p>';
-      return;
-    }
-    list.forEach((m) => {
-      const d = document.createElement("div");
-      d.className = "memory-item";
-      d.innerHTML = `
-        <span class="mem-key">${escapeHtml(m.key)}</span>
-        <span class="mem-value">${escapeHtml(m.value)}</span>
-        <button class="mem-del" data-id="${m.id}">✕</button>
-      `;
-      d.querySelector(".mem-del").onclick = async () => {
-        await fetch(`/api/memory/${m.id}`, { method: "DELETE" });
-        loadMemories();
-      };
-      el.appendChild(d);
-    });
-  } catch {}
-}
-
-// ═══════════════════════════════════════════════════════════════
-// 🪙 Tokens & Referral
-// ═══════════════════════════════════════════════════════════════
-function updateTokensDisplay(tokens) {
-  const el = $("tokensCount");
-  if (el) {
-    el.textContent = (tokens || 0).toLocaleString("fa-IR");
-  }
-}
-
-async function loadReferralInfo() {
-  try {
-    const data = await fetch("/api/referral/info").then((r) => r.json());
-    if ($("myRefCode")) $("myRefCode").value = data.my_code || "—";
-    if ($("refCount")) $("refCount").textContent = data.total_referrals || 0;
-    if ($("refTokens")) $("refTokens").textContent = data.total_tokens_earned || 0;
-    if ($("tokensPerRef")) $("tokensPerRef").textContent = data.tokens_per_referral || 10;
-
-    const list = $("refList");
-    list.innerHTML = "";
-    if (!data.referrals || !data.referrals.length) {
-      list.innerHTML = '<p style="color:var(--fg3);font-size:12px;text-align:center;padding:12px">هنوز کسی رو دعوت نکردی</p>';
-    } else {
-      data.referrals.forEach((r) => {
-        const d = document.createElement("div");
-        d.style.cssText = "display:flex;justify-content:space-between;padding:8px 12px;background:var(--bg3);border-radius:8px;margin-bottom:4px;font-size:12px";
-        d.innerHTML = `
-          <span>👤 ${escapeHtml(r.username)}</span>
-          <span style="color:#fbbf24">🪙 +${r.tokens_awarded}</span>
-        `;
-        list.appendChild(d);
-      });
-    }
-  } catch (e) {
-    console.error("referral error:", e);
-  }
-}
-
-if ($("openReferral")) {
-  $("openReferral").onclick = () => {
-    loadReferralInfo();
-    $("referralModal").classList.add("open");
-  };
-}
-if ($("closeReferral")) $("closeReferral").onclick = () => $("referralModal").classList.remove("open");
-if ($("closeReferralBtn")) $("closeReferralBtn").onclick = () => $("referralModal").classList.remove("open");
-if ($("copyRefCode")) {
-  $("copyRefCode").onclick = () => {
-    const code = $("myRefCode").value;
-    navigator.clipboard.writeText(code);
-    toast("✅ کد کپی شد: " + code, "success");
-  };
-}
-
-// ═══════════════════════════════════════════════════════════════
-// 🎮 Gaming Theme
-// ═══════════════════════════════════════════════════════════════
-async function loadGamingStatus() {
-  try {
-    const me = await fetch("/api/auth/me").then((r) => r.json());
-    currentUser = me;
-    const statusEl = $("gamingStatus");
-    const actionsEl = $("gamingActions");
-    if (!statusEl || !actionsEl) return;
-
-    if (me.gaming_theme_unlocked) {
-      statusEl.innerHTML = "✅ <b style='color:#22c55e'>تم گیمینگ فعال است!</b> می‌تونی از بخش تم‌ها انتخابش کنی.";
-      actionsEl.innerHTML = `
-        <button class="send-btn" id="applyGaming" style="width:100%;height:48px">
-          🎮 فعال‌سازی تم گیمینگ
-        </button>
-      `;
-      if ($("applyGaming")) {
-        $("applyGaming").onclick = () => {
-          applyTheme("gaming");
-          renderThemeGrid();
-          toast("🎮 تم گیمینگ فعال شد!", "success");
-          $("gamingModal").classList.remove("open");
-        };
-      }
-    } else {
-      statusEl.innerHTML = "🔒 این تم قفله. برای فعال‌سازی یکی از روش‌های زیر رو انتخاب کن:";
-      actionsEl.innerHTML = `
-        <button class="send-btn" id="unlockWithTokens" style="width:100%;height:48px">
-          🪙 فعال‌سازی با توکن
-        </button>
-        <button class="btn-ghost" id="unlockWithPayment" style="height:48px;border-color:#fbbf24;color:#fbbf24">
-          💰 درخواست پرداخت
-        </button>
-      `;
-      if ($("unlockWithTokens")) {
-        $("unlockWithTokens").onclick = async () => {
-          if (!confirm("با توکن فعال کنم؟")) return;
-          const r = await fetch("/api/referral/unlock-gaming-theme", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ method: "tokens" }),
-          });
-          const data = await r.json();
-          if (r.ok) {
-            toast("🎮 تم گیمینگ فعال شد! 🎉", "success");
-            updateTokensDisplay(data.remaining_tokens);
-            loadGamingStatus();
-            renderThemeGrid();
-          } else {
-            toast("❌ " + (data.detail || "خطا"), "error");
-          }
-        };
-      }
-      if ($("unlockWithPayment")) {
-        $("unlockWithPayment").onclick = async () => {
-          const ref = prompt("شماره پیگیری پرداخت رو وارد کن:");
-          if (ref === null) return;
-          const r = await fetch("/api/referral/unlock-gaming-theme", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ method: "payment" }),
-          });
-          const data = await r.json();
-          if (r.ok) {
-            toast("✅ درخواست ثبت شد. منتظر تأیید ادمین باش.", "success");
-            $("gamingModal").classList.remove("open");
-          } else {
-            toast("❌ " + (data.detail || "خطا"), "error");
-          }
-        };
-      }
-    }
-  } catch (e) {
-    console.error(e);
-  }
-}
-
-if ($("openGaming")) {
-  $("openGaming").onclick = () => {
-    loadGamingStatus();
-    $("gamingModal").classList.add("open");
-  };
-}
-if ($("closeGaming")) $("closeGaming").onclick = () => $("gamingModal").classList.remove("open");
-if ($("closeGamingBtn")) $("closeGamingBtn").onclick = () => $("gamingModal").classList.remove("open");
-
-// ═══════════════════════════════════════════════════════════════
-// Admin Settings
-// ═══════════════════════════════════════════════════════════════
-if ($("openAdminSettings")) {
-  $("openAdminSettings").onclick = async () => {
-    try {
-      const s = await fetch("/api/settings/admin").then((r) => r.json());
-      const set = (id, v) => { const el = $(id); if (el) el.value = v; };
-      const setChk = (id, v) => { const el = $(id); if (el) el.checked = v; };
-      const setTxt = (id, v) => { const el = $(id); if (el) el.textContent = v; };
-
-      set("admAiKey", "");
-      if ($("admAiKey")) $("admAiKey").placeholder = s.ai_api_key_masked || "sk-...";
-      set("admAiUrl", s.ai_base_url || "");
-      set("admAiModel", s.ai_model || "");
-      set("admAiTemp", s.ai_temperature); setTxt("admTempVal", s.ai_temperature);
-      set("admAiMaxTokens", s.ai_max_tokens);
-      set("admSysPrompt", s.ai_system_prompt || "");
-      setChk("admFallbackEnabled", s.fallback_enabled);
-      set("admFbKey", "");
-      if ($("admFbKey")) $("admFbKey").placeholder = s.fallback_api_key_masked || "sk-...";
-      set("admFbUrl", s.fallback_base_url || "");
-      set("admFbModel", s.fallback_model || "");
-      setChk("admMaintenance", s.maintenance_mode);
-      set("admMaintenanceMsg", s.maintenance_message || "");
-      setChk("admAllowReg", s.allow_registration);
-      set("admSiteName", s.site_name || "");
-      set("admSiteDesc", s.site_description || "");
-      set("admWelcome", s.welcome_message || "");
-      set("admMaxUpload", s.max_upload_mb);
-      set("admDailyMsg", s.daily_message_limit);
-      set("admMaxUsers", s.max_users);
-      set("admRateLimit", s.rate_limit_per_minute);
-      set("admMinPass", s.min_password_length);
-      set("admSessionDays", s.session_days);
-      setChk("admRequireEmail", s.require_email_verification);
-      set("admDefTheme", s.default_theme);
-      set("admDefModel", s.default_model);
-      set("admDefTemp", s.default_temperature); setTxt("admDefTempVal", s.default_temperature);
-      setChk("admDefStreaming", s.default_streaming);
-      setChk("admReferralEnabled", s.referral_enabled);
-      set("admReferralTokens", s.referral_tokens);
-      set("admGamingPrice", s.gaming_theme_price);
-      set("admGamingTokenPrice", s.gaming_theme_token_price);
-
-      if ($("testApiResult")) $("testApiResult").textContent = "";
-      $("adminSettingsModal").classList.add("open");
-    } catch (e) {
-      alert("خطا: " + e.message);
-    }
-  };
-}
-
-if ($("closeAdminSettings")) $("closeAdminSettings").onclick = () => $("adminSettingsModal").classList.remove("open");
-if ($("closeAdminSettingsBtn")) $("closeAdminSettingsBtn").onclick = () => $("adminSettingsModal").classList.remove("open");
-
-document.querySelectorAll("#adminTabs .tab").forEach((t) => {
-  t.onclick = () => {
-    document.querySelectorAll("#adminTabs .tab").forEach((x) => x.classList.remove("active"));
-    document.querySelectorAll("#adminSettingsModal .tab-content").forEach((x) => x.classList.remove("active"));
-    t.classList.add("active");
-    const target = document.querySelector(`#adminSettingsModal .tab-content[data-atab="${t.dataset.atab}"]`);
-    if (target) target.classList.add("active");
-  };
-});
-
-if ($("admAiTemp")) $("admAiTemp").oninput = () => { $("admTempVal").textContent = $("admAiTemp").value; };
-if ($("admDefTemp")) $("admDefTemp").oninput = () => { $("admDefTempVal").textContent = $("admDefTemp").value; };
-
-if ($("saveAdminSettings")) {
-  $("saveAdminSettings").onclick = async () => {
-    const body = {
-      ai_base_url: $("admAiUrl").value,
-      ai_model: $("admAiModel").value,
-      ai_temperature: parseFloat($("admAiTemp").value),
-      ai_max_tokens: parseInt($("admAiMaxTokens").value),
-      ai_system_prompt: $("admSysPrompt").value,
-      fallback_enabled: $("admFallbackEnabled").checked,
-      fallback_base_url: $("admFbUrl").value,
-      fallback_model: $("admFbModel").value,
-      maintenance_mode: $("admMaintenance").checked,
-      maintenance_message: $("admMaintenanceMsg").value,
-      allow_registration: $("admAllowReg").checked,
-      site_name: $("admSiteName").value,
-      site_description: $("admSiteDesc").value,
-      welcome_message: $("admWelcome").value,
-      max_upload_mb: parseInt($("admMaxUpload").value),
-      daily_message_limit: parseInt($("admDailyMsg").value),
-      max_users: parseInt($("admMaxUsers").value),
-      rate_limit_per_minute: parseInt($("admRateLimit").value),
-      min_password_length: parseInt($("admMinPass").value),
-      session_days: parseInt($("admSessionDays").value),
-      require_email_verification: $("admRequireEmail").checked,
-      default_theme: $("admDefTheme").value,
-      default_model: $("admDefModel").value,
-      default_temperature: parseFloat($("admDefTemp").value),
-      default_streaming: $("admDefStreaming").checked,
-      referral_enabled: $("admReferralEnabled").checked,
-      referral_tokens: parseInt($("admReferralTokens").value),
-      gaming_theme_price: parseInt($("admGamingPrice").value),
-      gaming_theme_token_price: parseInt($("admGamingTokenPrice").value),
-    };
-    if ($("admAiKey").value) body.ai_api_key = $("admAiKey").value;
-    if ($("admFbKey").value) body.fallback_api_key = $("admFbKey").value;
-
-    const r = await fetch("/api/settings/admin", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    if (r.ok) {
-      toast("✅ ذخیره شد", "success");
-      $("adminSettingsModal").classList.remove("open");
-    } else {
-      toast("❌ خطا", "error");
-    }
-  };
-}
-
-if ($("testAdminApi")) {
-  $("testAdminApi").onclick = async () => {
-    const el = $("testApiResult");
-    el.style.color = "var(--fg2)";
-    el.textContent = "⏳ در حال تست...";
-    const body = { ai_base_url: $("admAiUrl").value, ai_model: $("admAiModel").value };
-    if ($("admAiKey").value) body.ai_api_key = $("admAiKey").value;
-    await fetch("/api/settings/admin", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    try {
-      const r = await fetch("/api/settings/admin/test", { method: "POST" });
-      const data = await r.json();
-      if (data.ok) {
-        el.style.color = "#22c55e";
-        el.textContent = "✅ اتصال موفق! " + (data.reply || "");
-      } else {
-        el.style.color = "#ef4444";
-        el.textContent = "❌ " + (data.error || "خطا");
-      }
-    } catch (e) {
-      el.style.color = "#ef4444";
-      el.textContent = "❌ " + e.message;
-    }
-  };
-}
-
-// ═══════════════════════════════════════════════════════════════
-// Request Admin
-// ═══════════════════════════════════════════════════════════════
-if ($("requestAdminBtn")) {
-  $("requestAdminBtn").onclick = () => {
-    $("requestStatus").textContent = "";
-    $("requestModal").classList.add("open");
-  };
-}
-if ($("closeRequest")) $("closeRequest").onclick = () => $("requestModal").classList.remove("open");
-if ($("closeRequestBtn")) $("closeRequestBtn").onclick = () => $("requestModal").classList.remove("open");
-if ($("submitRequest")) {
-  $("submitRequest").onclick = async () => {
-    const reason = $("requestReason").value;
-    const st = $("requestStatus");
-    try {
-      const r = await fetch("/api/auth/request-admin", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reason }),
-      });
-      const data = await r.json();
-      if (!r.ok) throw new Error(data.detail);
-      st.style.color = "#22c55e";
-      st.textContent = "✅ درخواست ارسال شد.";
-      $("requestAdminBtn").innerHTML = "<span>⏳</span> در انتظار تأیید";
-    } catch (e) {
-      st.style.color = "#ef4444";
-      st.textContent = "❌ " + e.message;
-    }
-  };
-}
-
-// ═══════════════════════════════════════════════════════════════
-// Command Palette
-// ═══════════════════════════════════════════════════════════════
-const COMMANDS = [
-  { icon: "➕", title: "گفتگوی جدید", desc: "شروع یک مکالمه جدید", shortcut: "Ctrl+N", action: () => $("newChat").click() },
-  { icon: "⚙️", title: "تنظیمات", desc: "باز کردن تنظیمات", action: () => $("openSettings").click() },
-  { icon: "🎁", title: "دعوت دوستان", desc: "کد معرف و توکن‌ها", action: () => $("openReferral").click() },
-  { icon: "🎮", title: "تم گیمینگ", desc: "خرید یا فعال‌سازی", action: () => $("openGaming").click() },
-  { icon: "🔍", title: "جستجو در گفتگوها", desc: "فوکوس روی جستجو", action: () => $("searchInput").focus() },
-  { icon: "📦", title: "بکاپ کل گفتگوها", desc: "دانلود همه", action: () => $("exportAllBtn").click() },
-  { icon: "🚪", title: "خروج", desc: "خروج از حساب", action: () => $("logoutBtn").click() },
-  { icon: "☰", title: "تاگل سایدبار", desc: "نمایش/مخفی", shortcut: "Ctrl+B", action: toggleSidebar },
-  { icon: "🎙️", title: "میکروفون", desc: "شروع ضبط", action: () => $("micBtn").click() },
-];
-
-let paletteSelected = 0;
-
-function renderPalette(query = "") {
-  const list = $("paletteList");
-  if (!list) return;
-  list.innerHTML = "";
-  const q = query.toLowerCase();
-  const filtered = COMMANDS.filter((c) => c.title.toLowerCase().includes(q) || c.desc.toLowerCase().includes(q));
-
-  if (!filtered.length) {
-    list.innerHTML = '<div style="padding:20px;text-align:center;color:var(--fg2);font-size:13px">چیزی پیدا نشد</div>';
-    return;
-  }
-
-  paletteSelected = 0;
-  filtered.forEach((c, i) => {
-    const d = document.createElement("div");
-    d.className = "palette-item" + (i === 0 ? " selected" : "");
-    d.innerHTML = `
-      <span class="palette-item-icon">${c.icon}</span>
-      <div class="palette-item-content">
-        <div class="palette-item-title">${c.title}</div>
-        <div class="palette-item-desc">${c.desc}</div>
-      </div>
-      ${c.shortcut ? `<span class="palette-item-shortcut">${c.shortcut}</span>` : ""}
-    `;
-    d.onclick = () => { c.action(); $("commandPalette").classList.remove("open"); };
-    list.appendChild(d);
-  });
-}
-
-if ($("paletteInput")) {
-  $("paletteInput").addEventListener("input", (e) => renderPalette(e.target.value));
-}
-
-// ═══════════════════════════════════════════════════════════════
-// Keyboard Shortcuts
-// ═══════════════════════════════════════════════════════════════
-document.addEventListener("keydown", (e) => {
-  // Ctrl+K: Command Palette
-  if (e.ctrlKey && e.key === "k") {
-    e.preventDefault();
-    $("commandPalette").classList.add("open");
-    renderPalette();
-    setTimeout(() => $("paletteInput").focus(), 100);
-  }
-  // Ctrl+N: New chat
-  if (e.ctrlKey && e.key === "n") {
-    e.preventDefault();
-    if ($("newChat")) $("newChat").click();
-  }
-  // Ctrl+/: Focus input
-  if (e.ctrlKey && e.key === "/") {
-    e.preventDefault();
-    if ($("input")) $("input").focus();
-  }
-  // Ctrl+B: Toggle sidebar
-  if (e.ctrlKey && e.key === "b") {
-    e.preventDefault();
-    toggleSidebar();
-  }
-  // Esc: Close modals
-  if (e.key === "Escape") {
-    document.querySelectorAll(".modal.open").forEach((m) => m.classList.remove("open"));
-  }
-  // Enter in palette
-  if ($("commandPalette").classList.contains("open") && e.key === "Enter") {
-    const items = document.querySelectorAll(".palette-item");
-    if (items[paletteSelected]) items[paletteSelected].click();
-  }
-});
-
-// ═══════════════════════════════════════════════════════════════
-// Init
-// ═══════════════════════════════════════════════════════════════
-if (window.mermaid) {
-  mermaid.initialize({ startOnLoad: false, theme: "dark" });
-}
-
-checkAuth();
+    if (
+      !confirm(
+        "همه‌ی گفتگوها
